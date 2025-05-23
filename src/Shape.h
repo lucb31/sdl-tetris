@@ -8,19 +8,22 @@
 #include "Vec2.h"
 
 namespace Tetris {
-
-class Shape : public GameObject {
-private:
-    bool m_grounded;
-    Math::Vec2 m_position;
-    Math::Vec2 m_velocity;
+    class Shape : public GameObject {
+    private:
+        float m_width, m_height;
+        bool m_grounded;
+        Math::Vec2 m_position;
+        Math::Vec2 m_velocity;
 
     public:
-    Shape(float x, float y);
-    void Draw(SDL_Surface *) override;
-    void Tick(float dt) override;
-};
+        SDL_Rect BB() const;
+        Shape(float x, float y);
 
+        void Freeze();
+
+        void Draw(SDL_Surface *) override;
+        void Tick(float dt) override;
+    };
 } // Tetris
 
 #endif //SHAPE_H

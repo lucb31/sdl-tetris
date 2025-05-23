@@ -18,8 +18,8 @@ int main() {
 
     // Initialize game
     Tetris::Board board;
-    Tetris::Shape shape(50, 50);
-    Tetris::Shape shape2(150, 150);
+    Tetris::Shape shape(50, 300);
+    Tetris::Shape shape2(50, 400);
     board.AddShape(&shape);
     board.AddShape(&shape2);
 
@@ -49,6 +49,9 @@ int main() {
 
         // Cap FPS: Delay render of next frame
         const Uint64 frame_render_time_ns = SDL_GetTicksNS() - frame_start_time;
+        if (frame_render_time_ns > nsPerFrame) {
+            continue;
+        }
         const Uint64 wait_time_ns = nsPerFrame - frame_render_time_ns;
         const auto wait_time_ms = static_cast
                 <Uint32>(static_cast<double>(wait_time_ns) / 1e6);
