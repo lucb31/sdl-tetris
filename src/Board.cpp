@@ -7,13 +7,11 @@
 namespace Tetris {
     void Board::CalculateCollisions() {
         m_collisions.clear();
-        for (const std::shared_ptr<Shape> &a: m_shapes) {
-            for (const std::shared_ptr<Shape> &b: m_shapes) {
-                // Skip collision with self
-                if (&a == &b) {
-                    continue;
-                }
-                // TODO: Skip if combination already checked
+        // Iterate over unique combinations of shapes
+        for (int i = 0; i < m_shapes.size(); i++) {
+            for (int j = i + 1; j < m_shapes.size(); j++) {
+                const std::shared_ptr<Shape> a = m_shapes[i];
+                const std::shared_ptr<Shape> b = m_shapes[j];
                 SDL_Rect a_bb = a->BB();
                 SDL_Rect b_bb = b->BB();
                 SDL_Rect intersection{};
@@ -33,7 +31,7 @@ namespace Tetris {
         }
     }
 
-    bool Board::AddShape(Shape *shape) {
+    bool Board::AddShape(const std::shared_ptr<Shape>& shape) {
         m_shapes.emplace_back(shape);
         return true;
     }

@@ -18,10 +18,11 @@ int main() {
 
     // Initialize game
     Tetris::Board board;
-    Tetris::Shape shape(50, 300);
-    Tetris::Shape shape2(50, 400);
-    board.AddShape(&shape);
-    board.AddShape(&shape2);
+    // Init some random shapes
+    for (int i = 0; i < 10; i++) {
+        auto shape = std::make_shared<Tetris::Shape>(SDL_rand(500), SDL_rand(500));
+        board.AddShape(shape);
+    }
 
     // Main loop
     bool quit = false;

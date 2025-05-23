@@ -29,7 +29,7 @@ private:
     void ProcessCollisions();
 
     public:
-    bool AddShape(Shape *shape);
+    bool AddShape(const std::shared_ptr<Shape>& shape);
     void Draw(SDL_Surface *surf) override;
     void Tick(float dt) override;
 };
