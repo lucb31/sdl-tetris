@@ -4,18 +4,19 @@
 
 #ifndef RENDERER_H
 #define RENDERER_H
-
 #endif //RENDERER_H
 
+#include "Board.h"
 #include <SDL3/SDL.h>
 
-constexpr int kScreenWidth = 800;
-constexpr int kScreenHeight = 600;
+constexpr int kScreenWidth = 1024;
+constexpr int kScreenHeight = 768;
+
 
 class Renderer {
 public:
     bool init();
-    bool render();
+    bool render(GameObject *);
     void close();
 
 private:

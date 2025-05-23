@@ -1,9 +1,11 @@
 #include <oneapi/tbb/profiling.h>
 #include <SDL3/SDL.h>
 
+#include "Board.h"
 #include "Renderer.h"
 
 constexpr int targetFps = 60;
+constexpr float dt = 1.0f / targetFps;
 constexpr Uint64 nsPerFrame = 1e9 / targetFps;
 
 int main() {
@@ -14,6 +16,13 @@ int main() {
     };
     SDL_Log("Init successful");
 
+    // Initialize game
+    Tetris::Board board;
+    Tetris::Shape shape(50, 50);
+    Tetris::Shape shape2(150, 150);
+    board.AddShape(&shape);
+    board.AddShape(&shape2);
+
     // Main loop
     bool quit = false;
     int frames = 0;
@@ -21,7 +30,6 @@ int main() {
     SDL_Event event;
     SDL_zero(event);
 
-    // Debug FPS Calculation setup
     while (!quit) {
         const Uint64 frame_start_time = SDL_GetTicksNS();
 
@@ -32,9 +40,13 @@ int main() {
             }
         }
 
+        // Advance frame
+        board.Tick(dt);
+
         // Render current frame
-        renderer.render();
+        renderer.render(&board);
         frames++;
+
         // Cap FPS: Delay render of next frame
         const Uint64 frame_render_time_ns = SDL_GetTicksNS() - frame_start_time;
         const Uint64 wait_time_ns = nsPerFrame - frame_render_time_ns;

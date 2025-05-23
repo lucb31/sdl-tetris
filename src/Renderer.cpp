@@ -29,10 +29,10 @@ void Renderer::close() {
     SDL_Quit();
 }
 
-bool Renderer::render() {
+bool Renderer::render(GameObject *d) {
+    // Clear screen
     SDL_FillSurfaceRect(screen_surface, nullptr, SDL_MapSurfaceRGB(screen_surface, 0xFF, 0xFF, 0xFF));
-    const SDL_Rect rect = {100, 100, 250, 250};
-    SDL_FillSurfaceRect(screen_surface, &rect, SDL_MapSurfaceRGB(screen_surface, 0x00, 0xFF, 0xFF));
+    d->Draw(screen_surface);
     SDL_UpdateWindowSurface(window);
     return true;
 }
