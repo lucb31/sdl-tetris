@@ -24,7 +24,7 @@ namespace Tetris {
     private:
         std::vector<std::shared_ptr<Shape>> m_shapes;
         std::vector<Collision> m_collisions;
-        TickTimer *m_tickTimer;
+        std::unique_ptr<TickTimer> m_tickTimer;
 
         void CalculateCollisions();
 
@@ -32,7 +32,6 @@ namespace Tetris {
 
     public:
         Board();
-        ~Board();
 
         void AddRandomShape();
         bool AddShape(const std::shared_ptr<Shape> &shape);

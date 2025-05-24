@@ -10,6 +10,7 @@
 class TickTimer {
 private:
     bool m_done;
+    bool m_loop;
     float m_elapsed;
     float m_timeout;
     std::function<void(int)> m_callback;
@@ -17,6 +18,7 @@ private:
 public:
     void Tick(float dt);
     TickTimer(float timeout, const std::function<void(int)> &cb);
+    void SetLoop(bool loop);
 };
 
 

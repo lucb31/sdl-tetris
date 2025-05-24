@@ -32,12 +32,10 @@ namespace Tetris {
     }
 
     Board::Board() {
-        auto *t = new TickTimer(1.0f, [this](int) { AddRandomShape(); });
-        m_tickTimer = t;
-    }
-
-    Board::~Board() {
-        delete m_tickTimer;
+        m_tickTimer = std::make_unique<TickTimer>(1.0f, [this](int) {
+            AddRandomShape();
+        });
+        m_tickTimer->SetLoop(true);
     }
 
     void Board::AddRandomShape() {
