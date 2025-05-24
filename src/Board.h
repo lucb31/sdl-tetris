@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "GameObject.h"
+#include "TickTimer.h"
 #include "SDL3/SDL_surface.h"
 
 struct Collision {
@@ -19,21 +20,27 @@ struct Collision {
 };
 
 namespace Tetris {
+    class Board : public GameObject {
+    private:
+        std::vector<std::shared_ptr<Shape>> m_shapes;
+        std::vector<Collision> m_collisions;
+        TickTimer *m_tickTimer;
 
-class Board : public GameObject {
-private:
-    std::vector<std::shared_ptr<Shape>> m_shapes;
-    std::vector<Collision> m_collisions;
+        void CalculateCollisions();
 
-    void CalculateCollisions();
-    void ProcessCollisions();
+        void ProcessCollisions();
 
     public:
-    bool AddShape(const std::shared_ptr<Shape>& shape);
-    void Draw(SDL_Surface *surf) override;
-    void Tick(float dt) override;
-};
+        Board();
+        ~Board();
 
+        void AddRandomShape();
+        bool AddShape(const std::shared_ptr<Shape> &shape);
+
+        void Draw(SDL_Surface *surf) override;
+
+        void Tick(float dt) override;
+    };
 } // Tetris
 
 #endif //BOARD_H

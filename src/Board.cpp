@@ -31,6 +31,20 @@ namespace Tetris {
         }
     }
 
+    Board::Board() {
+        auto *t = new TickTimer(1.0f, [this](int) { AddRandomShape(); });
+        m_tickTimer = t;
+    }
+
+    Board::~Board() {
+        delete m_tickTimer;
+    }
+
+    void Board::AddRandomShape() {
+        const auto shape = std::make_shared<Shape>(SDL_rand(500), 0);
+        AddShape(shape);
+    }
+
     bool Board::AddShape(const std::shared_ptr<Shape>& shape) {
         m_shapes.emplace_back(shape);
         return true;
@@ -45,6 +59,9 @@ namespace Tetris {
     void Board::Tick(const float dt) {
         CalculateCollisions();
         ProcessCollisions();
+
+        // Calculate frame for all subobjects
+        m_tickTimer->Tick(dt);
         for (const std::shared_ptr<Shape> &shape: m_shapes) {
             shape->Tick(dt);
         }
