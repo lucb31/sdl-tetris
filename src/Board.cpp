@@ -5,6 +5,7 @@
 #include "Board.h"
 
 #include "Keymap.h"
+#include "Constants.h"
 #include "SDL3/SDL_log.h"
 
 namespace Tetris {
@@ -26,7 +27,7 @@ namespace Tetris {
         }
     }
 
-    void Board::ProcessCollisions() {
+    void Board::ProcessCollisions() const {
         for (const auto &collision: m_collisions) {
             // Handle collisions by stopping all movement of involved shapes
             collision.a->Freeze();
@@ -64,9 +65,22 @@ namespace Tetris {
         }
     }
 
-    void Board::Draw(SDL_Surface *surf) {
+    void Board::Draw(SDL_Renderer* renderer) {
+        // Draw grid
+        // NOTE: Optimization: We could just calculate and store the grid data. This never changes
+        std::vector<SDL_FRect> rects;
+        rects.reserve(tiles);
+        for (int row = 0; row < tileRows; row++) {
+            for (int col = 0; col < tileCols; col++) {
+                rects.emplace_back(col*widthPerTile, row*heightPerTile, widthPerTile, heightPerTile);
+            }
+        }
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 50);
+        SDL_RenderRects(renderer, rects.data(), tiles);
+
+        // Draw shapes
         for (const std::shared_ptr<Shape> &shape: m_shapes) {
-            shape->Draw(surf);
+            shape->Draw(renderer);
         }
     }
 

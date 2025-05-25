@@ -6,6 +6,7 @@
 #define SHAPE_H
 #include "GameObject.h"
 #include "Vec2.h"
+#include "Constants.h"
 
 namespace Tetris {
     class Shape : public GameObject {
@@ -27,13 +28,14 @@ namespace Tetris {
 
     public:
         SDL_Rect BB() const;
+        SDL_FRect FBB() const;
 
         Shape() : Shape(0, 0) { }
 
         Shape(const float x, const float y) : m_velocity(Math::Vec2(0, 0)),
                                               m_position(Math::Vec2(x, y)),
-                                              m_width(50),
-                                              m_height(50),
+                                              m_width(widthPerTile),
+                                              m_height(heightPerTile),
                                               m_grounded(false),
                                               m_gravity(150),
                                               m_speed(150) { }
@@ -44,7 +46,7 @@ namespace Tetris {
 
         void MoveTowards(const Math::Vec2 &direction);
 
-        void Draw(SDL_Surface *) override;
+        void Draw(SDL_Renderer *) override;
 
         void Tick(float dt) override;
     };

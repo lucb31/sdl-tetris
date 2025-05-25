@@ -13,6 +13,10 @@ namespace Tetris {
         return SDL_Rect{(int) m_position.x(), (int) m_position.y(), (int) m_width, (int) m_height};
     }
 
+    SDL_FRect Shape::FBB() const {
+        return SDL_FRect{m_position.x(), m_position.y(), m_width, m_height};
+    }
+
     void Shape::Freeze() {
         m_velocity = Math::Vec2();
         m_grounded = true;
@@ -26,10 +30,12 @@ namespace Tetris {
         m_inputVelocity = normalizedDirection*m_speed;
     }
 
-    void Shape::Draw(SDL_Surface *surf) {
+    void Shape::Draw(SDL_Renderer* renderer) {
         // Simply draw by drawing filled BB
-        const SDL_Rect bb = BB();
-        SDL_FillSurfaceRect(surf, &bb, SDL_MapSurfaceRGB(surf, 0x00, 0xFF, 0xFF));
+        SDL_FRect bb = FBB();
+        // TODO: Enums for colors
+        SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
+        SDL_RenderFillRect(renderer, &bb);
     }
 
     void Shape::Tick(const float dt) {

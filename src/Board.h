@@ -4,15 +4,15 @@
 
 #ifndef BOARD_H
 #define BOARD_H
-#include "Shape.h"
 
 #include <vector>
 #include <memory>
 
-#include "GameObject.h"
-#include "TickTimer.h"
 #include "SDL3/SDL_events.h"
-#include "SDL3/SDL_surface.h"
+
+#include "GameObject.h"
+#include "Shape.h"
+#include "TickTimer.h"
 
 struct Collision {
     std::shared_ptr<Tetris::Shape> a;
@@ -35,7 +35,7 @@ namespace Tetris {
 
         void CalculateCollisions();
 
-        void ProcessCollisions();
+        void ProcessCollisions() const;
 
         void AddRandomShape();
         bool AddShape(const std::shared_ptr<Shape> &shape);
@@ -45,7 +45,7 @@ namespace Tetris {
         void HandleKeyDown(const SDL_KeyboardEvent&);
         void HandleKeyUp(const SDL_KeyboardEvent&);
 
-        void Draw(SDL_Surface *surf) override;
+        void Draw(SDL_Renderer* renderer) override;
 
         void Tick(float dt) override;
     };

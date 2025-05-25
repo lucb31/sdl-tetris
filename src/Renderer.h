@@ -20,7 +20,6 @@ public:
     void close();
 
 private:
-    SDL_Window* window{nullptr};
-    SDL_Surface* screen_surface{nullptr};
-    SDL_Surface* hello_world{nullptr};
+    SDL_Window* m_window{nullptr};
+    SDL_Renderer* m_renderer{nullptr};
 };
