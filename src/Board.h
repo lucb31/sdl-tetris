@@ -17,7 +17,7 @@
 struct Collision {
     std::shared_ptr<Tetris::Shape> a;
     std::shared_ptr<Tetris::Shape> b;
-    SDL_FRect intersection;
+    Math::Vec2 direction;
 };
 
 namespace Tetris {
@@ -36,7 +36,7 @@ namespace Tetris {
 
         void CalculateCollisions();
 
-        void ProcessCollisions() const;
+        void ProcessCollisions();
 
         void AddRandomShape();
         bool AddShape(const std::shared_ptr<Shape> &shape);

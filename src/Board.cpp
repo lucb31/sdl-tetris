@@ -17,7 +17,8 @@ namespace Tetris {
         m_collisions.clear();
         // Retrieve list of bounding boxes
         std::vector<std::shared_ptr<ShapeWithBB> > bbs;
-        bbs.reserve(m_shapes.size() * 4);
+        // 4 tiles per shape + 4 boundary BB
+        bbs.reserve(m_shapes.size() * 4 + 4);
         for (const auto &shape: m_shapes) {
             const auto shapeBBs = shape->GetCollisionBBs();
             for (const auto &bb: shapeBBs) {
@@ -25,31 +26,77 @@ namespace Tetris {
             }
         }
 
+        // Add board bounding boxes
+        constexpr int boundingBoxMaxX = tileCols * widthPerTile;
+        constexpr int boundingBoxMaxY = tileRows * heightPerTile;
+        const auto groundBB = std::make_shared<SDL_FRect>(0.0f, boundingBoxMaxY, boundingBoxMaxX, 10.0f);
+        bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, groundBB));
+        const auto topBB = std::make_shared<SDL_FRect>(0.0f, -10.0f, boundingBoxMaxX, 9.9f);
+        bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, topBB));
+        const auto leftBB = std::make_shared<SDL_FRect>(-10.0f, 0.0f, 10.0f, boundingBoxMaxY);
+        bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, leftBB));
+        const auto rightBB = std::make_shared<SDL_FRect>(boundingBoxMaxX, 0.0f, 10.0f, boundingBoxMaxY);
+        bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, rightBB));
+
         // Iterate over unique combinations of bounding boxes
         for (int i = 0; i < bbs.size(); i++) {
             for (int j = i + 1; j < bbs.size(); j++) {
-                const auto &a = bbs[i];
-                const auto &b = bbs[j];
-                // No need to check collisions between two grounded shapes
-                if (a->shape->IsGrounded() && b->shape->IsGrounded()) continue;
+                auto a = bbs[i];
+                auto b = bbs[j];
+                // No need to check collisions between shapes that are grounded or outer bounds
+                if ((a->shape == nullptr || a->shape->IsGrounded()) &&
+                    (b->shape == nullptr || b->shape->IsGrounded()))
+                    continue;
                 // Skip collision check for tiles within same shape
                 if (a->shape == b->shape) continue;
                 SDL_FRect intersection{};
                 if (SDL_GetRectIntersectionFloat(a->bb.get(), b->bb.get(), &intersection)) {
                     // Collision detected
-                    m_collisions.emplace_back(Collision{a->shape, b->shape, intersection});
+                    // Ensure that the first shape of the collision is always the active one
+                    if (a->shape == nullptr || a->shape->IsGrounded()) {
+                        a.swap(b);
+                    }
+
+                    // Determine on which side of the BB we've collided
+                    const std::shared_ptr<SDL_FRect> bbForDirection = a->bb;
+                    // Check position of intersection relative to position
+                    Math::Vec2 collisionDirection;
+                    if (intersection.w > 0) {
+                        // Vertical collision
+                        if (bbForDirection->y >= intersection.y) {
+                            collisionDirection.e[1] = 1;
+                        } else {
+                            collisionDirection.e[1] = -1;
+                        }
+                    }
+                    if (intersection.h > 0) {
+                        // Horizontal collision
+                        if (bbForDirection->x >= intersection.x) {
+                            collisionDirection.e[0] = 1;
+                        } else {
+                            collisionDirection.e[0] = -1;
+                        }
+                    }
+
+                    // Register collision to be handled in next process step
+                    m_collisions.emplace_back(Collision{a->shape, b->shape, collisionDirection});
                 }
             }
         }
     }
 
-    void Board::ProcessCollisions() const {
+    void Board::ProcessCollisions() {
         for (const auto &collision: m_collisions) {
-            const bool isVerticalCollision = collision.intersection.w > 0;
-            if (isVerticalCollision) {
-                // Handle collisions by stopping all movement of involved shapes
-                collision.a->Freeze();
-                collision.b->Freeze();
+            if (collision.direction.y() != 0) {
+                // Vertical collision
+                // Stopp all movement of involved shapes
+                if (collision.a != nullptr) collision.a->Freeze();
+                if (collision.b != nullptr) collision.b->Freeze();
+            }
+            if (collision.direction.x() != 0) {
+                // Horizontal collision -> Restrict input movement
+                m_leftPressed = m_leftPressed && collision.direction.x() < 0;
+                m_rightPressed = m_rightPressed && collision.direction.x() > 0;
             }
         }
     }

@@ -14,10 +14,13 @@ namespace Tetris {
     }
 
     void Tile::Draw(SDL_Renderer* renderer) {
-        // Simply draw by drawing filled BB
         SDL_FRect bb = BB();
         // TODO: Enums for colors
+        // Fill
         SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
         SDL_RenderFillRect(renderer, &bb);
+        // Outline
+        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+        SDL_RenderRect(renderer, &bb);
     }
 } // Tetris

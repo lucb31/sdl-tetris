@@ -23,7 +23,7 @@ namespace Tetris {
 
         std::vector<std::unique_ptr<Tile> > m_tiles;
         Math::Vec2 m_position;
-        float m_rotation;
+        float m_rotation = 0.0f;
         // Actual velocity
         Math::Vec2 m_velocity;
         // Requested velocity by user input
