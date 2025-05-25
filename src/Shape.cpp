@@ -4,17 +4,17 @@
 
 #include "Shape.h"
 
+#include <cmath>
+
 namespace Tetris {
     void Shape::CalculateVelocity() {
         m_velocity = m_inputVelocity + Math::Vec2(0, m_gravity);
     }
 
-    SDL_Rect Shape::BB() const {
-        return SDL_Rect{(int) m_position.x(), (int) m_position.y(), (int) m_width, (int) m_height};
-    }
-
-    SDL_FRect Shape::FBB() const {
-        return SDL_FRect{m_position.x(), m_position.y(), m_width, m_height};
+    SDL_FRect Shape::DiscreteBB() const {
+        const float discreteY = std::round(m_position.y() / heightPerTile) * heightPerTile;
+        const float discreteX = std::round(m_position.x() / widthPerTile) * widthPerTile;
+        return SDL_FRect{discreteX, discreteY, m_width, m_height};
     }
 
     void Shape::Freeze() {
@@ -32,7 +32,7 @@ namespace Tetris {
 
     void Shape::Draw(SDL_Renderer* renderer) {
         // Simply draw by drawing filled BB
-        SDL_FRect bb = FBB();
+        SDL_FRect bb = DiscreteBB();
         // TODO: Enums for colors
         SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
         SDL_RenderFillRect(renderer, &bb);
@@ -46,6 +46,7 @@ namespace Tetris {
         m_position += m_velocity * dt;
 
         // Collision with floor
+        // TODO: Ground plane
         if (m_position.y() >= 500) {
             Freeze();
         }

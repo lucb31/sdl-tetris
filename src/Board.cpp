@@ -6,7 +6,6 @@
 
 #include "Keymap.h"
 #include "Constants.h"
-#include "SDL3/SDL_log.h"
 
 namespace Tetris {
     void Board::CalculateCollisions() {
@@ -16,10 +15,14 @@ namespace Tetris {
             for (int j = i + 1; j < m_shapes.size(); j++) {
                 const std::shared_ptr<Shape> a = m_shapes[i];
                 const std::shared_ptr<Shape> b = m_shapes[j];
-                SDL_Rect a_bb = a->BB();
-                SDL_Rect b_bb = b->BB();
-                SDL_Rect intersection{};
-                if (SDL_GetRectIntersection(&a_bb, &b_bb, &intersection)) {
+                if (a->IsGrounded() && b->IsGrounded()) {
+                    // No need to check collisions between two grounded shapes
+                    continue;
+                }
+                SDL_FRect a_bb = a->DiscreteBB();
+                SDL_FRect b_bb = b->DiscreteBB();
+                SDL_FRect intersection{};
+                if (SDL_GetRectIntersectionFloat(&a_bb, &b_bb, &intersection)) {
                     // Collision detected
                     m_collisions.emplace_back(Collision{a, b, intersection});
                 }
@@ -29,9 +32,12 @@ namespace Tetris {
 
     void Board::ProcessCollisions() const {
         for (const auto &collision: m_collisions) {
-            // Handle collisions by stopping all movement of involved shapes
-            collision.a->Freeze();
-            collision.b->Freeze();
+            const bool isVerticalCollision = collision.intersection.w > 0;
+            if (isVerticalCollision) {
+                // Handle collisions by stopping all movement of involved shapes
+                collision.a->Freeze();
+                collision.b->Freeze();
+            }
         }
     }
 
@@ -40,7 +46,7 @@ namespace Tetris {
     }
 
     void Board::AddRandomShape() {
-        m_activeShape = std::make_shared<Shape>(SDL_rand(500), 0);
+        m_activeShape = std::make_shared<Shape>(tileCols / 2 * widthPerTile, 0);
         AddShape(m_activeShape);
     }
 

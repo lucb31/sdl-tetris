@@ -17,7 +17,7 @@
 struct Collision {
     std::shared_ptr<Tetris::Shape> a;
     std::shared_ptr<Tetris::Shape> b;
-    SDL_Rect intersection;
+    SDL_FRect intersection;
 };
 
 namespace Tetris {

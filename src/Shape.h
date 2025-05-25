@@ -27,8 +27,7 @@ namespace Tetris {
         void CalculateVelocity();
 
     public:
-        SDL_Rect BB() const;
-        SDL_FRect FBB() const;
+        SDL_FRect DiscreteBB() const;
 
         Shape() : Shape(0, 0) { }
 
