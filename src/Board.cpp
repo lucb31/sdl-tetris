@@ -8,23 +8,36 @@
 #include "Constants.h"
 
 namespace Tetris {
+    struct ShapeWithBB {
+        std::shared_ptr<Shape> shape;
+        std::shared_ptr<SDL_FRect> bb;
+    };
+
     void Board::CalculateCollisions() {
         m_collisions.clear();
-        // Iterate over unique combinations of shapes
-        for (int i = 0; i < m_shapes.size(); i++) {
-            for (int j = i + 1; j < m_shapes.size(); j++) {
-                const std::shared_ptr<Shape> a = m_shapes[i];
-                const std::shared_ptr<Shape> b = m_shapes[j];
-                if (a->IsGrounded() && b->IsGrounded()) {
-                    // No need to check collisions between two grounded shapes
-                    continue;
-                }
-                SDL_FRect a_bb = a->DiscreteBB();
-                SDL_FRect b_bb = b->DiscreteBB();
+        // Retrieve list of bounding boxes
+        std::vector<std::shared_ptr<ShapeWithBB> > bbs;
+        bbs.reserve(m_shapes.size() * 4);
+        for (const auto &shape: m_shapes) {
+            const auto shapeBBs = shape->GetCollisionBBs();
+            for (const auto &bb: shapeBBs) {
+                bbs.emplace_back(std::make_shared<ShapeWithBB>(shape, bb));
+            }
+        }
+
+        // Iterate over unique combinations of bounding boxes
+        for (int i = 0; i < bbs.size(); i++) {
+            for (int j = i + 1; j < bbs.size(); j++) {
+                const auto &a = bbs[i];
+                const auto &b = bbs[j];
+                // No need to check collisions between two grounded shapes
+                if (a->shape->IsGrounded() && b->shape->IsGrounded()) continue;
+                // Skip collision check for tiles within same shape
+                if (a->shape == b->shape) continue;
                 SDL_FRect intersection{};
-                if (SDL_GetRectIntersectionFloat(&a_bb, &b_bb, &intersection)) {
+                if (SDL_GetRectIntersectionFloat(a->bb.get(), b->bb.get(), &intersection)) {
                     // Collision detected
-                    m_collisions.emplace_back(Collision{a, b, intersection});
+                    m_collisions.emplace_back(Collision{a->shape, b->shape, intersection});
                 }
             }
         }
@@ -61,12 +74,11 @@ namespace Tetris {
         rects.reserve(tiles);
         for (int row = 0; row < tileRows; row++) {
             for (int col = 0; col < tileCols; col++) {
-                rects.emplace_back(col*widthPerTile, row*heightPerTile, widthPerTile, heightPerTile);
+                rects.emplace_back(col * widthPerTile, row * heightPerTile, widthPerTile, heightPerTile);
             }
         }
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 25);
         SDL_RenderRects(renderer, rects.data(), tiles);
-
     }
 
     void Board::HandleKeyDown(const SDL_KeyboardEvent &e) {
@@ -89,7 +101,7 @@ namespace Tetris {
         }
     }
 
-    void Board::Draw(SDL_Renderer* renderer) {
+    void Board::Draw(SDL_Renderer *renderer) {
         DrawGrid(renderer);
         // Draw shapes
         for (const std::shared_ptr<Shape> &shape: m_shapes) {

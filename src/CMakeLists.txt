@@ -11,6 +11,10 @@ add_executable(${PROJECT_NAME}
         TickTimer.h
         Keymap.h
         Constants.h
+        Tile.cpp
+        Tile.h
+        Mat3.h
+        Vec3.h
 )
 target_sources(${PROJECT_NAME} PRIVATE main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE vendor)

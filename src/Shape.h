@@ -4,20 +4,24 @@
 
 #ifndef SHAPE_H
 #define SHAPE_H
+#include <memory>
+#include <vector>
+
 #include "GameObject.h"
 #include "Vec2.h"
 #include "Constants.h"
+#include "Mat3.h"
+#include "Tile.h"
 
 namespace Tetris {
     class Shape : public GameObject {
-        // Width & height in px
-        float m_width, m_height;
         // Constant vertical velocity component applied to velocity calculation
         float m_gravity;
         // Controls how 'maneuverable' the shape is
         float m_speed;
-        bool m_grounded;
+        bool m_grounded = false;
 
+        std::vector<std::unique_ptr<Tile> > m_tiles;
         Math::Vec2 m_position;
         // Actual velocity
         Math::Vec2 m_velocity;
@@ -27,17 +31,18 @@ namespace Tetris {
         void CalculateVelocity();
 
     public:
-        SDL_FRect DiscreteBB() const;
-
         Shape() : Shape(0, 0) { }
 
         Shape(const float x, const float y) : m_velocity(Math::Vec2(0, 0)),
                                               m_position(Math::Vec2(x, y)),
-                                              m_width(widthPerTile),
-                                              m_height(heightPerTile),
-                                              m_grounded(false),
                                               m_gravity(150),
-                                              m_speed(150) { }
+                                              m_speed(150) {
+            // Initialize tiles
+            m_tiles.reserve(4);
+            for (int i = 0; i < 4; i++) {
+                m_tiles.emplace_back(std::make_unique<Tile>(0, i * heightPerTile));
+            }
+        }
 
         bool IsGrounded() const { return m_grounded; }
 
@@ -48,6 +53,10 @@ namespace Tetris {
         void Draw(SDL_Renderer *) override;
 
         void Tick(float dt) override;
+
+        std::vector<std::shared_ptr<SDL_FRect>> GetCollisionBBs() const;
+
+        Math::Mat3 GetTransform() const;
     };
 } // Tetris
 
