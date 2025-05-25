@@ -41,7 +41,7 @@ namespace Tetris {
         }
     }
 
-    Board::Board() : m_leftPressed(false), m_rightPressed(false) {
+    Board::Board() {
         AddRandomShape();
     }
 
@@ -55,24 +55,7 @@ namespace Tetris {
         return true;
     }
 
-    void Board::HandleKeyDown(const SDL_KeyboardEvent &e) {
-        if (e.key == MoveLeft) {
-            m_leftPressed = true;
-        } else if (e.key == MoveRight) {
-            m_rightPressed = true;
-        }
-    }
-
-    void Board::HandleKeyUp(const SDL_KeyboardEvent &e) {
-        if (e.key == MoveLeft) {
-            m_leftPressed = false;
-        } else if (e.key == MoveRight) {
-            m_rightPressed = false;
-        }
-    }
-
-    void Board::Draw(SDL_Renderer* renderer) {
-        // Draw grid
+    void Board::DrawGrid(SDL_Renderer *renderer) {
         // NOTE: Optimization: We could just calculate and store the grid data. This never changes
         std::vector<SDL_FRect> rects;
         rects.reserve(tiles);
@@ -81,9 +64,33 @@ namespace Tetris {
                 rects.emplace_back(col*widthPerTile, row*heightPerTile, widthPerTile, heightPerTile);
             }
         }
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 50);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 25);
         SDL_RenderRects(renderer, rects.data(), tiles);
 
+    }
+
+    void Board::HandleKeyDown(const SDL_KeyboardEvent &e) {
+        if (e.key == MoveLeft) {
+            m_leftPressed = true;
+        } else if (e.key == MoveRight) {
+            m_rightPressed = true;
+        } else if (e.key == MoveDown) {
+            m_downPressed = true;
+        }
+    }
+
+    void Board::HandleKeyUp(const SDL_KeyboardEvent &e) {
+        if (e.key == MoveLeft) {
+            m_leftPressed = false;
+        } else if (e.key == MoveRight) {
+            m_rightPressed = false;
+        } else if (e.key == MoveDown) {
+            m_downPressed = false;
+        }
+    }
+
+    void Board::Draw(SDL_Renderer* renderer) {
+        DrawGrid(renderer);
         // Draw shapes
         for (const std::shared_ptr<Shape> &shape: m_shapes) {
             shape->Draw(renderer);
@@ -96,12 +103,14 @@ namespace Tetris {
 
         if (m_activeShape != nullptr) {
             // Active shape movement inputs
-            auto vertDirection = Math::Vec2();
+            auto inputVelocity = Math::Vec2();
             if (m_leftPressed)
-                vertDirection += Math::Vec2(-1, 0);
+                inputVelocity += Math::Vec2(-1, 0);
             if (m_rightPressed)
-                vertDirection += Math::Vec2(1, 0);
-            m_activeShape->MoveTowards(vertDirection);
+                inputVelocity += Math::Vec2(1, 0);
+            if (m_downPressed)
+                inputVelocity += Math::Vec2(0, 1);
+            m_activeShape->AddInputVelocity(inputVelocity);
 
             // Set timer to spawn new shape once active shape is grounded
             if (m_activeShape->IsGrounded()) {

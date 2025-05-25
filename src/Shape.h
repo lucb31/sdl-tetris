@@ -43,7 +43,7 @@ namespace Tetris {
 
         void Freeze();
 
-        void MoveTowards(const Math::Vec2 &direction);
+        void AddInputVelocity(const Math::Vec2 &direction);
 
         void Draw(SDL_Renderer *) override;
 

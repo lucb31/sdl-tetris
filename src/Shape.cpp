@@ -22,7 +22,7 @@ namespace Tetris {
         m_grounded = true;
     }
 
-    void Shape::MoveTowards(const Math::Vec2 &direction) {
+    void Shape::AddInputVelocity(const Math::Vec2 &direction) {
         if (m_grounded) {
             return;
         }

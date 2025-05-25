@@ -30,8 +30,9 @@ namespace Tetris {
         std::shared_ptr<Shape> m_activeShape;
 
         // Keyboard control
-        bool m_leftPressed;
-        bool m_rightPressed;
+        bool m_leftPressed{false};
+        bool m_rightPressed{false};
+        bool m_downPressed{false};
 
         void CalculateCollisions();
 
@@ -39,6 +40,8 @@ namespace Tetris {
 
         void AddRandomShape();
         bool AddShape(const std::shared_ptr<Shape> &shape);
+
+        static void DrawGrid(SDL_Renderer *renderer);
     public:
         Board();
 
