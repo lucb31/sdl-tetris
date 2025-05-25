@@ -23,6 +23,7 @@ namespace Tetris {
 
         std::vector<std::unique_ptr<Tile> > m_tiles;
         Math::Vec2 m_position;
+        float m_rotation;
         // Actual velocity
         Math::Vec2 m_velocity;
         // Requested velocity by user input
@@ -49,6 +50,8 @@ namespace Tetris {
         void Freeze();
 
         void AddInputVelocity(const Math::Vec2 &direction);
+
+        void Rotate(float radians);
 
         void Draw(SDL_Renderer *) override;
 

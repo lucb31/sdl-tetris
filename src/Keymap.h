@@ -11,6 +11,8 @@ namespace Tetris {
         MoveRight = SDLK_D,
         MoveUp = SDLK_W,
         MoveDown = SDLK_S,
+        RotateRight = SDLK_E,
+        RotateLeft = SDLK_Q,
     };
 }
 #endif //KEYMAP_H

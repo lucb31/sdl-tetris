@@ -24,6 +24,10 @@ namespace Tetris {
         m_inputVelocity = normalizedDirection * m_speed;
     }
 
+    void Shape::Rotate(float radians) {
+        m_rotation += radians;
+    }
+
     void Shape::Draw(SDL_Renderer *renderer) {
         // Draw tiles
         for (const auto &tile: m_tiles) {
@@ -72,10 +76,9 @@ namespace Tetris {
         );
 
         // Rotation
-        const float theta = 0.0f;
         const Math::Mat3 rotationMat = Math::Mat3(
-            std::cos(theta), std::sin(theta), 0,
-            -std::sin(theta), std::cos(theta), 0,
+            std::cos(m_rotation), std::sin(m_rotation), 0,
+            -std::sin(m_rotation), std::cos(m_rotation), 0,
             0, 0, 1
         );
         return translationMat * rotationMat;

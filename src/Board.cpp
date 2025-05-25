@@ -88,6 +88,14 @@ namespace Tetris {
             m_rightPressed = true;
         } else if (e.key == MoveDown) {
             m_downPressed = true;
+        } else if (e.key == RotateLeft) {
+            if (m_activeShape != nullptr) {
+                m_activeShape->Rotate(M_PI / 2);
+            }
+        } else if (e.key == RotateRight) {
+            if (m_activeShape != nullptr) {
+                m_activeShape->Rotate(-M_PI / 2);
+            }
         }
     }
 
