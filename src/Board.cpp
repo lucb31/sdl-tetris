@@ -4,6 +4,9 @@
 
 #include "Board.h"
 
+#include "Keymap.h"
+#include "SDL3/SDL_log.h"
+
 namespace Tetris {
     void Board::CalculateCollisions() {
         m_collisions.clear();
@@ -31,21 +34,34 @@ namespace Tetris {
         }
     }
 
-    Board::Board() {
-        m_tickTimer = std::make_unique<TickTimer>(1.0f, [this](int) {
-            AddRandomShape();
-        });
-        m_tickTimer->SetLoop(true);
+    Board::Board() : m_leftPressed(false), m_rightPressed(false) {
+        AddRandomShape();
     }
 
     void Board::AddRandomShape() {
-        const auto shape = std::make_shared<Shape>(SDL_rand(500), 0);
-        AddShape(shape);
+        m_activeShape = std::make_shared<Shape>(SDL_rand(500), 0);
+        AddShape(m_activeShape);
     }
 
-    bool Board::AddShape(const std::shared_ptr<Shape>& shape) {
+    bool Board::AddShape(const std::shared_ptr<Shape> &shape) {
         m_shapes.emplace_back(shape);
         return true;
+    }
+
+    void Board::HandleKeyDown(const SDL_KeyboardEvent &e) {
+        if (e.key == MoveLeft) {
+            m_leftPressed = true;
+        } else if (e.key == MoveRight) {
+            m_rightPressed = true;
+        }
+    }
+
+    void Board::HandleKeyUp(const SDL_KeyboardEvent &e) {
+        if (e.key == MoveLeft) {
+            m_leftPressed = false;
+        } else if (e.key == MoveRight) {
+            m_rightPressed = false;
+        }
     }
 
     void Board::Draw(SDL_Surface *surf) {
@@ -58,8 +74,28 @@ namespace Tetris {
         CalculateCollisions();
         ProcessCollisions();
 
+        if (m_activeShape != nullptr) {
+            // Active shape movement inputs
+            auto vertDirection = Math::Vec2();
+            if (m_leftPressed)
+                vertDirection += Math::Vec2(-1, 0);
+            if (m_rightPressed)
+                vertDirection += Math::Vec2(1, 0);
+            m_activeShape->MoveTowards(vertDirection);
+
+            // Set timer to spawn new shape once active shape is grounded
+            if (m_activeShape->IsGrounded()) {
+                m_tickTimer = std::make_unique<TickTimer>(1.0f, [this](int) {
+                    AddRandomShape();
+                });
+                m_activeShape = nullptr;
+            }
+        }
+
         // Calculate frame for all subobjects
-        m_tickTimer->Tick(dt);
+        if (m_tickTimer != nullptr) {
+            m_tickTimer->Tick(dt);
+        }
         for (const std::shared_ptr<Shape> &shape: m_shapes) {
             shape->Tick(dt);
         }

@@ -11,6 +11,7 @@
 
 #include "GameObject.h"
 #include "TickTimer.h"
+#include "SDL3/SDL_events.h"
 #include "SDL3/SDL_surface.h"
 
 struct Collision {
@@ -26,15 +27,23 @@ namespace Tetris {
         std::vector<Collision> m_collisions;
         std::unique_ptr<TickTimer> m_tickTimer;
 
+        std::shared_ptr<Shape> m_activeShape;
+
+        // Keyboard control
+        bool m_leftPressed;
+        bool m_rightPressed;
+
         void CalculateCollisions();
 
         void ProcessCollisions();
 
+        void AddRandomShape();
+        bool AddShape(const std::shared_ptr<Shape> &shape);
     public:
         Board();
 
-        void AddRandomShape();
-        bool AddShape(const std::shared_ptr<Shape> &shape);
+        void HandleKeyDown(const SDL_KeyboardEvent&);
+        void HandleKeyUp(const SDL_KeyboardEvent&);
 
         void Draw(SDL_Surface *surf) override;
 

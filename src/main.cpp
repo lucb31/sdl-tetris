@@ -18,11 +18,6 @@ int main() {
 
     // Initialize game
     Tetris::Board board;
-    // Init some random shapes
-    for (int i = 0; i < 10; i++) {
-        auto shape = std::make_shared<Tetris::Shape>(SDL_rand(500), SDL_rand(500));
-        board.AddShape(shape);
-    }
 
     // Main loop
     bool quit = false;
@@ -38,6 +33,10 @@ int main() {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
                 quit = true;
+            } else if (event.type == SDL_EVENT_KEY_DOWN) {
+                board.HandleKeyDown(event.key);
+            } else if (event.type == SDL_EVENT_KEY_UP) {
+                board.HandleKeyUp(event.key);
             }
         }
 

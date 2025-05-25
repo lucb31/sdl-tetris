@@ -9,6 +9,7 @@ add_executable(${PROJECT_NAME}
         Vec2.h
         TickTimer.cpp
         TickTimer.h
+        Keymap.h
 )
 target_sources(${PROJECT_NAME} PRIVATE main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE vendor)

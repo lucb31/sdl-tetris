@@ -19,9 +19,7 @@ bool Renderer::init() {
 }
 
 void Renderer::close() {
-    SDL_DestroySurface(hello_world);
-    hello_world = nullptr;
-
+    SDL_DestroySurface(screen_surface);
     SDL_DestroyWindow(window);
     window = nullptr;
     screen_surface = nullptr;

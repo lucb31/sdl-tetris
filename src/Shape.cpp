@@ -5,21 +5,25 @@
 #include "Shape.h"
 
 namespace Tetris {
-    SDL_Rect Shape::BB() const {
-        return SDL_Rect{(int) m_position.x(), (int) m_position.y(), (int) m_width, (int) m_height};
+    void Shape::CalculateVelocity() {
+        m_velocity = m_inputVelocity + Math::Vec2(0, m_gravity);
     }
 
-    Shape::Shape(float x, float y) {
-        m_velocity = Math::Vec2(0, 50);
-        m_position = Math::Vec2(x, y);
-        m_width = 50;
-        m_height = 50;
-        m_grounded = false;
+    SDL_Rect Shape::BB() const {
+        return SDL_Rect{(int) m_position.x(), (int) m_position.y(), (int) m_width, (int) m_height};
     }
 
     void Shape::Freeze() {
         m_velocity = Math::Vec2();
         m_grounded = true;
+    }
+
+    void Shape::MoveTowards(const Math::Vec2 &direction) {
+        if (m_grounded) {
+            return;
+        }
+        Math::Vec2 normalizedDirection = direction.Norm();
+        m_inputVelocity = normalizedDirection*m_speed;
     }
 
     void Shape::Draw(SDL_Surface *surf) {
@@ -29,6 +33,10 @@ namespace Tetris {
     }
 
     void Shape::Tick(const float dt) {
+        if (m_grounded) {
+            return;
+        }
+        CalculateVelocity();
         m_position += m_velocity * dt;
 
         // Collision with floor

@@ -4,6 +4,7 @@
 
 #ifndef VEC2_H
 #define VEC2_H
+#include <cmath>
 
 namespace Math {
 
@@ -16,6 +17,18 @@ public:
     float x() const { return e[0]; }
     float y() const { return e[1]; }
     float z() const { return e[2]; }
+
+    Vec2 Norm() const {
+        const float length = Length();
+        // Avoid division by zero
+        if (length == 0) return {};
+        return {e[0] / length, e[1] / length};
+    }
+
+    float Length() const {
+        if (e[0] == 0.0f && e[1] == 0.0f) return 0.0f;
+        return std::sqrt(e[0] * e[0] + e[1] * e[1]);
+    }
 
     Vec2& operator +=(const Vec2& rhs) {
         e[0] += rhs.e[0];
