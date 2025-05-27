@@ -35,6 +35,10 @@ namespace Tetris {
         for (const auto &tile: m_tiles) {
             tile->Draw(renderer);
         }
+
+        // Draw shape center
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        SDL_RenderDebugText(renderer, m_position.x(), m_position.y(), "X");
     }
 
     void Shape::Tick(const float dt) {
@@ -84,16 +88,12 @@ namespace Tetris {
         return translationMat * rotationMat;
     }
 
-    Shape::Shape(const float x, const float y) : m_position(Math::Vec2(x, y)), m_velocity(Math::Vec2(0, 0)) {
-        // Overwrite position to center around rotation point of I-Shape
-        m_position.e[0] += widthPerTile*0.5f;
-        m_position.e[1] += 2*heightPerTile;
-
+    Shape::Shape(const float x, const float y, const std::vector<Math::Vec2>& tilePositions) : m_position(Math::Vec2(x, y)), m_velocity(Math::Vec2(0, 0)) {
         // Initialize tiles
-        m_tiles.reserve(4);
+        m_tiles.reserve(tilePositions.size());
         const auto t = GetTransform();
-        for (int i = 0; i < 4; i++) {
-            m_tiles.emplace_back(std::make_unique<Tile>(.1f, (i-1.5f) * heightPerTile + .1f));
+        for (int i = 0; i < tilePositions.size(); i++) {
+            m_tiles.emplace_back(std::make_unique<Tile>(tilePositions[i]));
             m_tiles[i]->parentTransform = t;
         }
     }

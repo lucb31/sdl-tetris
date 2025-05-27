@@ -31,9 +31,7 @@ namespace Tetris {
         void CalculateVelocity();
 
     public:
-        Shape() : Shape(0, 0) { }
-
-        Shape(float x, float y);
+        Shape(float x, float y, const std::vector<Math::Vec2> &tilePositions);
 
         bool IsGrounded() const { return m_grounded; }
 
@@ -50,6 +48,7 @@ namespace Tetris {
         std::vector<std::shared_ptr<SDL_FRect>> GetCollisionBBs() const;
 
         Math::Mat3 GetTransform() const;
+
     };
 } // Tetris
 

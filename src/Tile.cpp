@@ -9,8 +9,8 @@
 namespace Tetris {
     SDL_FRect Tile::BB() const {
         const Math::Vec3 globalPos = GetGlobalTopLeft();
-        const float discreteX = std::round((globalPos.x() - 0.0) / widthPerTile) * widthPerTile;
-        const float discreteY = std::round((globalPos.y() - 0.0) / heightPerTile) * heightPerTile;
+        const float discreteX = std::round(globalPos.x()  / widthPerTile) * widthPerTile;
+        const float discreteY = std::round(globalPos.y()  / heightPerTile) * heightPerTile;
         return SDL_FRect{discreteX, discreteY, widthPerTile, heightPerTile};
     }
 

@@ -21,18 +21,29 @@ struct Collision {
 };
 
 namespace Tetris {
+    struct ShapeConfiguration {
+        std::vector<Math::Vec2> tilePositions;
+
+        ShapeConfiguration() {
+            tilePositions.reserve(4);
+        }
+    };
+
     class Board : public GameObject {
     private:
         std::vector<std::shared_ptr<Shape>> m_shapes;
         std::vector<Collision> m_collisions;
         std::unique_ptr<TickTimer> m_tickTimer;
 
+        // Shapes
         std::shared_ptr<Shape> m_activeShape;
+        std::vector<ShapeConfiguration> m_shapeConfigurations;
 
         // Keyboard control
         bool m_leftPressed{false};
         bool m_rightPressed{false};
         bool m_downPressed{false};
+        bool m_upPressed{false};
         bool m_gameOver{false};
 
         void CalculateCollisions();

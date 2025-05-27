@@ -109,11 +109,39 @@ namespace Tetris {
     }
 
     Board::Board() {
+        // Initialize shape configurations
+        m_shapeConfigurations.reserve(3);
+        // I
+        ShapeConfiguration iConfig;
+        iConfig.tilePositions.emplace_back(0, -48);
+        iConfig.tilePositions.emplace_back(0, -16);
+        iConfig.tilePositions.emplace_back(0, 16);
+        iConfig.tilePositions.emplace_back(0, 48);
+        m_shapeConfigurations.push_back(iConfig);
+        // L
+        ShapeConfiguration config;
+        config.tilePositions.emplace_back(0, -48);
+        config.tilePositions.emplace_back(0, -16);
+        config.tilePositions.emplace_back(0, 16);
+        config.tilePositions.emplace_back(-32, 16);
+        m_shapeConfigurations.push_back(config);
+        // T
+        ShapeConfiguration tConfig;
+        tConfig.tilePositions.emplace_back(0, -16);
+        tConfig.tilePositions.emplace_back(0, 16);
+        tConfig.tilePositions.emplace_back(-32, 16);
+        tConfig.tilePositions.emplace_back(32, 16);
+        m_shapeConfigurations.push_back(tConfig);
+
         AddRandomShape();
     }
 
     void Board::AddRandomShape() {
-        m_activeShape = std::make_shared<Shape>(tileCols / 2 * widthPerTile, 0);
+        // Pick random shape
+        const int shapeIdx = SDL_rand(m_shapeConfigurations.size());
+        const auto shape = m_shapeConfigurations[shapeIdx];
+
+        m_activeShape = std::make_shared<Shape>(tileCols / 2 * widthPerTile, heightPerTile*2, shape.tilePositions);
         m_shapes.emplace_back(m_activeShape);
     }
 
@@ -137,6 +165,8 @@ namespace Tetris {
             m_rightPressed = true;
         } else if (e.key == MoveDown) {
             m_downPressed = true;
+        } else if (e.key == MoveUp) {
+            m_upPressed = true;
         } else if (e.key == RotateLeft) {
             if (m_activeShape != nullptr) {
                 m_activeShape->Rotate(M_PI / 2);
@@ -155,6 +185,8 @@ namespace Tetris {
             m_rightPressed = false;
         } else if (e.key == MoveDown) {
             m_downPressed = false;
+        } else if (e.key == MoveUp) {
+            m_upPressed = false;
         }
     }
 
@@ -191,6 +223,9 @@ namespace Tetris {
                     inputVelocity += Math::Vec2(1, 0);
                 if (m_downPressed)
                     inputVelocity += Math::Vec2(0, 1);
+                // Up just for debugging purposes
+                //if (m_upPressed)
+                //    inputVelocity += Math::Vec2(0, -1);
                 m_activeShape->AddInputVelocity(inputVelocity);
             }
         }
