@@ -15,9 +15,9 @@
 #include "TickTimer.h"
 
 struct Collision {
-    std::shared_ptr<Tetris::Shape> a;
-    std::shared_ptr<Tetris::Shape> b;
-    Math::Vec2 direction;
+    SDL_FRect a;
+    SDL_FRect b;
+    SDL_FRect intersection;
 };
 
 namespace Tetris {
@@ -31,11 +31,13 @@ namespace Tetris {
 
     class Board : public GameObject {
     private:
-        std::vector<std::shared_ptr<Shape>> m_shapes;
         std::vector<Collision> m_collisions;
         std::unique_ptr<TickTimer> m_tickTimer;
 
         // Shapes
+        // TODO: No longer has to be shared
+        std::vector<std::shared_ptr<Tile>> m_tiles;
+        // TODO: Unique ptr instead
         std::shared_ptr<Shape> m_activeShape;
         std::vector<ShapeConfiguration> m_shapeConfigurations;
 
@@ -45,6 +47,12 @@ namespace Tetris {
         bool m_downPressed{false};
         bool m_upPressed{false};
         bool m_gameOver{false};
+
+        void ClearLines(const std::vector<int> &rowIndices);
+
+        void CheckForClearedLines();
+
+        static std::vector<SDL_FRect> GetBoardBoundingBoxes();
 
         void CalculateCollisions();
 

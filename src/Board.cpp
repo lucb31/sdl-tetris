@@ -6,82 +6,111 @@
 
 #include "Keymap.h"
 #include "Constants.h"
+#include "SDL3/SDL_log.h"
 
 namespace Tetris {
-    struct ShapeWithBB {
-        std::shared_ptr<Shape> shape;
-        std::shared_ptr<SDL_FRect> bb;
-    };
+    void Board::ClearLines(const std::vector<int> &rowIndices) {
+        for (const auto &rowIndex: rowIndices) {
+            // Separate list of survivors that will replace the
+            // list of tiles after every row iteration
+            std::vector<std::shared_ptr<Tile>> survivors;
+            survivors.reserve(m_tiles.size() - tileCols);
+
+            // Bounds for the current row
+            const int rowMinY = rowIndex * heightPerTile;
+            const int rowMaxY = (rowIndex + 1) * heightPerTile;
+            for (const auto &tile : m_tiles) {
+                if (tile->position.y() > rowMaxY) {
+                    // If below row -> Survives
+                    survivors.push_back(tile);
+                    SDL_Log("Tile below cleared row");
+                } else if (tile->position.y() < rowMinY) {
+                    // If above row -> Survive & Move
+                    tile->position += Math::Vec2(0, heightPerTile);
+                    survivors.push_back(tile);
+                    SDL_Log("Tile above cleared row");
+                } else {
+                    SDL_Log("Tile within cleared row");
+                    // Will be removed, by not adding it to the survivors
+                }
+            }
+            // Update tiles with survivor list
+            m_tiles = survivors;
+        }
+    }
+
+    void Board::CheckForClearedLines() {
+        // Retrieve list of all frozen tile bounding boxes
+        std::vector<SDL_FRect> tileBBs;
+        tileBBs.reserve(m_tiles.size());
+        for (const auto &tile: m_tiles) {
+            tileBBs.push_back(tile->BB());
+        }
+
+        // Iterate over every scanline and check for collisions with tile BBs
+        std::vector<int> rowsToClear;
+        for (int row = 0; row < tileRows; ++row) {
+            int hits = 0;
+            const auto scanlineBB = SDL_FRect(0, row * heightPerTile, boardSizeX, heightPerTile);
+            for (const auto &tileBB: tileBBs) {
+                SDL_FRect intersection{};
+                if (SDL_GetRectIntersectionFloat(&tileBB, &scanlineBB, &intersection)) {
+                    if (intersection.h == heightPerTile) {
+                        hits++;
+                    }
+                }
+            }
+            // Number of collisions with scanline geq to number of tiles per row
+            // -> Entire line covered, schedule for deletion
+            if (hits >= tileCols) {
+                SDL_Log("Time to clear line %i", row);
+                rowsToClear.push_back(row);
+            }
+        }
+        if (rowsToClear.size() > 0) {
+            ClearLines(rowsToClear);
+        }
+    }
+
+    // TODO: Should just store this in memory
+    std::vector<SDL_FRect> Board::GetBoardBoundingBoxes() {
+        std::vector<SDL_FRect> bbs;
+        bbs.reserve(4);
+        // Floor
+        bbs.emplace_back(0.0f, boardSizeY, boardSizeX, 10.0f);
+        // Ceiling
+        bbs.emplace_back(0.0f, -10.0f, boardSizeX, 9.9f);
+        // Left side
+        bbs.emplace_back(-10.0f, 0.0f, 10.0f, boardSizeY);
+        // Right side
+        bbs.emplace_back(boardSizeX, 0.0f, 10.0f, boardSizeY);
+        return bbs;
+    }
 
     void Board::CalculateCollisions() {
         m_collisions.clear();
-        // Retrieve list of bounding boxes
-        std::vector<std::shared_ptr<ShapeWithBB> > bbs;
-        // 4 tiles per shape + 4 boundary BB
-        bbs.reserve(m_shapes.size() * 4 + 4);
-        for (const auto &shape: m_shapes) {
-            const auto shapeBBs = shape->GetCollisionBBs();
-            for (const auto &bb: shapeBBs) {
-                bbs.emplace_back(std::make_shared<ShapeWithBB>(shape, bb));
-            }
+        if (m_activeShape == nullptr) {
+            // We're only interested in collisions with for the active shape
+            return;
         }
-
-        // Add board bounding boxes
-        const auto groundBB = std::make_shared<SDL_FRect>(0.0f, boardSizeY, boardSizeX, 10.0f);
-        bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, groundBB));
-        const auto topBB = std::make_shared<SDL_FRect>(0.0f, -10.0f, boardSizeX, 9.9f);
-        bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, topBB));
-        const auto leftBB = std::make_shared<SDL_FRect>(-10.0f, 0.0f, 10.0f, boardSizeY);
-        bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, leftBB));
-        const auto rightBB = std::make_shared<SDL_FRect>(boardSizeX, 0.0f, 10.0f, boardSizeY);
-        bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, rightBB));
-
-        // Iterate over unique combinations of bounding boxes
-        for (int i = 0; i < bbs.size(); i++) {
-            for (int j = i + 1; j < bbs.size(); j++) {
-                auto a = bbs[i];
-                auto b = bbs[j];
-                // No need to check collisions between shapes that are grounded or outer bounds
-                if ((a->shape == nullptr || a->shape->IsGrounded()) &&
-                    (b->shape == nullptr || b->shape->IsGrounded()))
-                    continue;
-                // Skip collision check for tiles within same shape
-                if (a->shape == b->shape) continue;
+        const auto activeShapeBBs = m_activeShape->GetCollisionBBs();
+        for (const auto &bb: activeShapeBBs) {
+            // Check collisions with frozen tiles
+            for (const auto &tile: m_tiles) {
                 SDL_FRect intersection{};
-                if (SDL_GetRectIntersectionFloat(a->bb.get(), b->bb.get(), &intersection)) {
-                    // Collision detected
-                    // Ensure that the first shape of the collision is always the active one
-                    if (a->shape == nullptr || a->shape->IsGrounded()) {
-                        a.swap(b);
-                    }
-
-                    // Determine on which side of the BB we've collided
-                    const std::shared_ptr<SDL_FRect> bbForDirection = a->bb;
-                    // Check position of intersection relative to position
-                    Math::Vec2 collisionDirection;
-                    if (intersection.w >= 2.0f) {
-                        // Vertical collision
-                        if (bbForDirection->y >= intersection.y) {
-                            // Collision on the top side of the shape
-                            collisionDirection.e[1] = -1;
-                        } else {
-                            // Collision on the bottom side of the shape
-                            collisionDirection.e[1] = 1;
-                        }
-                    }
-                    if (intersection.h >= 2.0f) {
-                        // Horizontal collision
-                        if (bbForDirection->x >= intersection.x) {
-                            // Collision on the left side
-                            collisionDirection.e[0] = -1;
-                        } else {
-                            // Collision on the right side
-                            collisionDirection.e[0] = 1;
-                        }
-                    }
-
+                const SDL_FRect tileBB = tile->BB();
+                if (SDL_GetRectIntersectionFloat(bb.get(), &tileBB, &intersection)) {
                     // Register collision to be handled in next process step
-                    m_collisions.emplace_back(Collision{a->shape, b->shape, collisionDirection});
+                    m_collisions.emplace_back(Collision{*bb, tileBB, intersection});
+                }
+            }
+
+            // Check collisions with bounding boxes
+            for (const auto &boardBB: GetBoardBoundingBoxes()) {
+                SDL_FRect intersection{};
+                if (SDL_GetRectIntersectionFloat(bb.get(), &boardBB, &intersection)) {
+                    // Register collision to be handled in next process step
+                    m_collisions.emplace_back(Collision{*bb, boardBB, intersection});
                 }
             }
         }
@@ -89,21 +118,43 @@ namespace Tetris {
 
     void Board::ProcessCollisions() {
         for (const auto &collision: m_collisions) {
-            if (collision.direction.y() != 0) {
+            // Check position of intersection relative to position
+            Math::Vec2 collisionDirection;
+            if (collision.intersection.w >= 2.0f) {
                 // Vertical collision
-                // Stop all movement of involved shapes
-                if (collision.a != nullptr) collision.a->Freeze();
-                if (collision.b != nullptr) collision.b->Freeze();
+                if (collision.a.y >= collision.intersection.y) {
+                    // Collision on the top side of the shape
+                    collisionDirection.e[1] = -1;
+                } else {
+                    // Collision on the bottom side of the shape
+                    collisionDirection.e[1] = 1;
+                }
+            }
+            if (collision.intersection.h >= 2.0f) {
+                // Horizontal collision
+                if (collision.a.x >= collision.intersection.x) {
+                    // Collision on the left side
+                    collisionDirection.e[0] = -1;
+                } else {
+                    // Collision on the right side
+                    collisionDirection.e[0] = 1;
+                }
+            }
+
+            if (collisionDirection.y() != 0) {
+                // Vertical collision
+                // Stop movement of active shape
+                m_activeShape->Freeze();
 
                 // Collision on top side of the shape -> Game over
-                if (collision.direction.y() < 0) {
+                if (collisionDirection.y() < 0) {
                     m_gameOver = true;
                 }
             }
-            if (collision.direction.x() != 0) {
+            if (collisionDirection.x() != 0) {
                 // Horizontal collision -> Restrict input movement
-                m_leftPressed = m_leftPressed && collision.direction.x() > 0;
-                m_rightPressed = m_rightPressed && collision.direction.x() < 0;
+                m_leftPressed = m_leftPressed && collisionDirection.x() > 0;
+                m_rightPressed = m_rightPressed && collisionDirection.x() < 0;
             }
         }
     }
@@ -141,12 +192,13 @@ namespace Tetris {
         const int shapeIdx = SDL_rand(m_shapeConfigurations.size());
         const auto shape = m_shapeConfigurations[shapeIdx];
 
-        m_activeShape = std::make_shared<Shape>(tileCols / 2 * widthPerTile, heightPerTile*2, shape.tilePositions);
-        m_shapes.emplace_back(m_activeShape);
+        // Probably dosent have to be shared
+        m_activeShape = std::make_shared<Shape>(tileCols / 2 * widthPerTile, heightPerTile * 2, shape.tilePositions);
     }
 
     void Board::DrawGrid(SDL_Renderer *renderer) {
         // NOTE: Optimization: We could just calculate and store the grid data. This never changes
+        // Even better: Shader :)
         std::vector<SDL_FRect> rects;
         rects.reserve(tiles);
         for (int row = 0; row < tileRows; row++) {
@@ -169,11 +221,11 @@ namespace Tetris {
             m_upPressed = true;
         } else if (e.key == RotateLeft) {
             if (m_activeShape != nullptr) {
-                m_activeShape->Rotate(M_PI / 2);
+                m_activeShape->Rotate(-M_PI / 2);
             }
         } else if (e.key == RotateRight) {
             if (m_activeShape != nullptr) {
-                m_activeShape->Rotate(-M_PI / 2);
+                m_activeShape->Rotate(M_PI / 2);
             }
         }
     }
@@ -197,9 +249,11 @@ namespace Tetris {
             return;
         }
         DrawGrid(renderer);
-        // Draw shapes
-        for (const std::shared_ptr<Shape> &shape: m_shapes) {
-            shape->Draw(renderer);
+        if (m_activeShape != nullptr) {
+            m_activeShape->Draw(renderer);
+        }
+        for (const std::shared_ptr<Tile> &tile: m_tiles) {
+            tile->Draw(renderer);
         }
     }
 
@@ -209,6 +263,21 @@ namespace Tetris {
 
         if (m_activeShape != nullptr) {
             if (m_activeShape->IsGrounded() && !m_gameOver) {
+                // Move tiles
+                const auto tiles = m_activeShape->GetTiles();
+                const Math::Mat3 shapeTransform = m_activeShape->GetTransform();
+                m_tiles.reserve(m_tiles.size() + 4);
+                for (const auto &tile: tiles) {
+                    // Transform tile position to global pos
+                    const Math::Vec3 globalPos = shapeTransform * Math::Vec3(tile->position.x(), tile->position.y(), 1);
+                    // TODO: No need for a shared pointer
+                    m_tiles.emplace_back(std::make_shared<Tile>(globalPos.x(), globalPos.y()));
+                }
+                m_activeShape.reset();
+                // NOTE: Check if we have a memory leak here
+
+                CheckForClearedLines();
+
                 // Set timer to spawn next shape
                 m_tickTimer = std::make_unique<TickTimer>(1.0f, [this](int) {
                     AddRandomShape();
@@ -234,9 +303,8 @@ namespace Tetris {
         if (m_tickTimer != nullptr) {
             m_tickTimer->Tick(dt);
         }
-        // Shapes
-        for (const std::shared_ptr<Shape> &shape: m_shapes) {
-            shape->Tick(dt);
+        if (m_activeShape != nullptr) {
+            m_activeShape->Tick(dt);
         }
     }
 } // Tetris

@@ -12,8 +12,6 @@
 namespace Tetris {
 
 class Tile : public GameObject {
-    // Relative position towards parent
-    Math::Vec2 m_position;
 
     Math::Vec3 GetGlobalTopLeft() const;
 
@@ -21,13 +19,16 @@ class Tile : public GameObject {
 
     void DrawDiscretePosition(SDL_Renderer *renderer) const;
 public:
+    // Relative position towards parent
+    Math::Vec2 position;
     Math::Mat3 parentTransform{1,0,0, 0,1,0, 0,0,1};
 
     SDL_FRect BB() const;
 
     Tile() : Tile(0, 0) {};
-    Tile(float x, float y) : m_position(x, y) {};
-    explicit Tile(const Math::Vec2 &pos) : m_position(pos) {};
+    Tile(float x, float y) : position(x, y) {};
+    explicit Tile(const Math::Vec2 &pos) : position(pos) {};
+
     void Draw(SDL_Renderer *) override;
 
     // Nothing to do in tick function. Movement & behavior is handled in parent

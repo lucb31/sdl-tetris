@@ -20,7 +20,7 @@ namespace Tetris {
         float m_speed = 150;
         bool m_grounded = false;
 
-        std::vector<std::unique_ptr<Tile> > m_tiles;
+        std::vector<std::shared_ptr<Tile> > m_tiles;
         Math::Vec2 m_position;
         float m_rotation = 0.0f;
         // Actual velocity
@@ -34,6 +34,8 @@ namespace Tetris {
         Shape(float x, float y, const std::vector<Math::Vec2> &tilePositions);
 
         bool IsGrounded() const { return m_grounded; }
+
+        std::vector<std::shared_ptr<Tile>> GetTiles() const { return m_tiles; }
 
         void Freeze();
 

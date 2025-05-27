@@ -61,6 +61,7 @@ namespace Tetris {
         }
     }
 
+    // Shared ptr probably not required here. Can just copy
     std::vector<std::shared_ptr<SDL_FRect>> Shape::GetCollisionBBs() const {
         // Calculate BBs for all tiles
         std::vector<std::shared_ptr<SDL_FRect> > collisionBBs;
@@ -93,7 +94,7 @@ namespace Tetris {
         m_tiles.reserve(tilePositions.size());
         const auto t = GetTransform();
         for (int i = 0; i < tilePositions.size(); i++) {
-            m_tiles.emplace_back(std::make_unique<Tile>(tilePositions[i]));
+            m_tiles.emplace_back(std::make_shared<Tile>(tilePositions[i]));
             m_tiles[i]->parentTransform = t;
         }
     }

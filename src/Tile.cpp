@@ -16,7 +16,7 @@ namespace Tetris {
 
     Math::Vec3 Tile::GetGlobalTopLeft() const {
         // Apply parent transform to local position to retrieve global center position
-        Math::Vec3 globalPos = parentTransform * Math::Vec3(m_position.x(), m_position.y(), 1);
+        Math::Vec3 globalPos = parentTransform * Math::Vec3(position.x(), position.y(), 1);
         // Offset from center position to top left
         Math::Mat3 localTransform = Math::Mat3(
             1, 0, 0,
