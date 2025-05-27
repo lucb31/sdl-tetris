@@ -33,13 +33,13 @@ namespace Tetris {
         bool m_leftPressed{false};
         bool m_rightPressed{false};
         bool m_downPressed{false};
+        bool m_gameOver{false};
 
         void CalculateCollisions();
 
         void ProcessCollisions();
 
         void AddRandomShape();
-        bool AddShape(const std::shared_ptr<Shape> &shape);
 
         static void DrawGrid(SDL_Renderer *renderer);
     public:

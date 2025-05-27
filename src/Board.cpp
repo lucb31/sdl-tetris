@@ -27,15 +27,13 @@ namespace Tetris {
         }
 
         // Add board bounding boxes
-        constexpr int boundingBoxMaxX = tileCols * widthPerTile;
-        constexpr int boundingBoxMaxY = tileRows * heightPerTile;
-        const auto groundBB = std::make_shared<SDL_FRect>(0.0f, boundingBoxMaxY, boundingBoxMaxX, 10.0f);
+        const auto groundBB = std::make_shared<SDL_FRect>(0.0f, boardSizeY, boardSizeX, 10.0f);
         bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, groundBB));
-        const auto topBB = std::make_shared<SDL_FRect>(0.0f, -10.0f, boundingBoxMaxX, 9.9f);
+        const auto topBB = std::make_shared<SDL_FRect>(0.0f, -10.0f, boardSizeX, 9.9f);
         bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, topBB));
-        const auto leftBB = std::make_shared<SDL_FRect>(-10.0f, 0.0f, 10.0f, boundingBoxMaxY);
+        const auto leftBB = std::make_shared<SDL_FRect>(-10.0f, 0.0f, 10.0f, boardSizeY);
         bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, leftBB));
-        const auto rightBB = std::make_shared<SDL_FRect>(boundingBoxMaxX, 0.0f, 10.0f, boundingBoxMaxY);
+        const auto rightBB = std::make_shared<SDL_FRect>(boardSizeX, 0.0f, 10.0f, boardSizeY);
         bbs.emplace_back(std::make_shared<ShapeWithBB>(nullptr, rightBB));
 
         // Iterate over unique combinations of bounding boxes
@@ -61,20 +59,24 @@ namespace Tetris {
                     const std::shared_ptr<SDL_FRect> bbForDirection = a->bb;
                     // Check position of intersection relative to position
                     Math::Vec2 collisionDirection;
-                    if (intersection.w > 0) {
+                    if (intersection.w >= 2.0f) {
                         // Vertical collision
                         if (bbForDirection->y >= intersection.y) {
-                            collisionDirection.e[1] = 1;
-                        } else {
+                            // Collision on the top side of the shape
                             collisionDirection.e[1] = -1;
+                        } else {
+                            // Collision on the bottom side of the shape
+                            collisionDirection.e[1] = 1;
                         }
                     }
-                    if (intersection.h > 0) {
+                    if (intersection.h >= 2.0f) {
                         // Horizontal collision
                         if (bbForDirection->x >= intersection.x) {
-                            collisionDirection.e[0] = 1;
-                        } else {
+                            // Collision on the left side
                             collisionDirection.e[0] = -1;
+                        } else {
+                            // Collision on the right side
+                            collisionDirection.e[0] = 1;
                         }
                     }
 
@@ -89,14 +91,19 @@ namespace Tetris {
         for (const auto &collision: m_collisions) {
             if (collision.direction.y() != 0) {
                 // Vertical collision
-                // Stopp all movement of involved shapes
+                // Stop all movement of involved shapes
                 if (collision.a != nullptr) collision.a->Freeze();
                 if (collision.b != nullptr) collision.b->Freeze();
+
+                // Collision on top side of the shape -> Game over
+                if (collision.direction.y() < 0) {
+                    m_gameOver = true;
+                }
             }
             if (collision.direction.x() != 0) {
                 // Horizontal collision -> Restrict input movement
-                m_leftPressed = m_leftPressed && collision.direction.x() < 0;
-                m_rightPressed = m_rightPressed && collision.direction.x() > 0;
+                m_leftPressed = m_leftPressed && collision.direction.x() > 0;
+                m_rightPressed = m_rightPressed && collision.direction.x() < 0;
             }
         }
     }
@@ -107,12 +114,7 @@ namespace Tetris {
 
     void Board::AddRandomShape() {
         m_activeShape = std::make_shared<Shape>(tileCols / 2 * widthPerTile, 0);
-        AddShape(m_activeShape);
-    }
-
-    bool Board::AddShape(const std::shared_ptr<Shape> &shape) {
-        m_shapes.emplace_back(shape);
-        return true;
+        m_shapes.emplace_back(m_activeShape);
     }
 
     void Board::DrawGrid(SDL_Renderer *renderer) {
@@ -157,6 +159,11 @@ namespace Tetris {
     }
 
     void Board::Draw(SDL_Renderer *renderer) {
+        if (m_gameOver) {
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            SDL_RenderDebugText(renderer, boardSizeX / 2, boardSizeY / 2, "Game Over!");
+            return;
+        }
         DrawGrid(renderer);
         // Draw shapes
         for (const std::shared_ptr<Shape> &shape: m_shapes) {
@@ -169,22 +176,22 @@ namespace Tetris {
         ProcessCollisions();
 
         if (m_activeShape != nullptr) {
-            // Active shape movement inputs
-            auto inputVelocity = Math::Vec2();
-            if (m_leftPressed)
-                inputVelocity += Math::Vec2(-1, 0);
-            if (m_rightPressed)
-                inputVelocity += Math::Vec2(1, 0);
-            if (m_downPressed)
-                inputVelocity += Math::Vec2(0, 1);
-            m_activeShape->AddInputVelocity(inputVelocity);
-
-            // Set timer to spawn new shape once active shape is grounded
-            if (m_activeShape->IsGrounded()) {
+            if (m_activeShape->IsGrounded() && !m_gameOver) {
+                // Set timer to spawn next shape
                 m_tickTimer = std::make_unique<TickTimer>(1.0f, [this](int) {
                     AddRandomShape();
                 });
                 m_activeShape = nullptr;
+            } else {
+                // Apply active shape movement inputs
+                auto inputVelocity = Math::Vec2();
+                if (m_leftPressed)
+                    inputVelocity += Math::Vec2(-1, 0);
+                if (m_rightPressed)
+                    inputVelocity += Math::Vec2(1, 0);
+                if (m_downPressed)
+                    inputVelocity += Math::Vec2(0, 1);
+                m_activeShape->AddInputVelocity(inputVelocity);
             }
         }
 
@@ -192,6 +199,7 @@ namespace Tetris {
         if (m_tickTimer != nullptr) {
             m_tickTimer->Tick(dt);
         }
+        // Shapes
         for (const std::shared_ptr<Shape> &shape: m_shapes) {
             shape->Tick(dt);
         }

@@ -14,6 +14,12 @@ namespace Tetris {
 class Tile : public GameObject {
     // Relative position towards parent
     Math::Vec2 m_position;
+
+    Math::Vec3 GetGlobalTopLeft() const;
+
+    void DrawRealPosition(SDL_Renderer *renderer) const;
+
+    void DrawDiscretePosition(SDL_Renderer *renderer) const;
 public:
     Math::Mat3 parentTransform{1,0,0, 0,1,0, 0,0,1};
 

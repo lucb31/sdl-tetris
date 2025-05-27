@@ -6,6 +6,8 @@
 
 #include <cmath>
 
+#include "Constants.h"
+
 namespace Tetris {
     void Shape::CalculateVelocity() {
         m_velocity = m_inputVelocity + Math::Vec2(0, m_gravity);
@@ -37,6 +39,7 @@ namespace Tetris {
 
     void Shape::Tick(const float dt) {
         if (m_grounded) {
+            // No need to re-calculate position, velocity, transform ...
             return;
         }
         CalculateVelocity();
@@ -65,14 +68,11 @@ namespace Tetris {
     }
 
     Math::Mat3 Shape::GetTransform() const {
-        // Translation
-        const float discreteY = std::round(m_position.y() / heightPerTile) * heightPerTile;
-        const float discreteX = std::round(m_position.x() / widthPerTile) * widthPerTile;
         // Column-major order
         const Math::Mat3 translationMat = Math::Mat3(
             1, 0, 0,
             0, 1, 0,
-            discreteX, discreteY, 1
+            m_position.x(), m_position.y(), 1
         );
 
         // Rotation
@@ -82,5 +82,19 @@ namespace Tetris {
             0, 0, 1
         );
         return translationMat * rotationMat;
+    }
+
+    Shape::Shape(const float x, const float y) : m_position(Math::Vec2(x, y)), m_velocity(Math::Vec2(0, 0)) {
+        // Overwrite position to center around rotation point of I-Shape
+        m_position.e[0] += widthPerTile*0.5f;
+        m_position.e[1] += 2*heightPerTile;
+
+        // Initialize tiles
+        m_tiles.reserve(4);
+        const auto t = GetTransform();
+        for (int i = 0; i < 4; i++) {
+            m_tiles.emplace_back(std::make_unique<Tile>(.1f, (i-1.5f) * heightPerTile + .1f));
+            m_tiles[i]->parentTransform = t;
+        }
     }
 } // Tetris
