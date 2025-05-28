@@ -34,6 +34,9 @@ namespace Tetris {
         std::vector<Collision> m_collisions;
         std::unique_ptr<TickTimer> m_tickTimer;
 
+        // Game state
+        bool m_gameOver{false};
+        int m_score{0};
         // Shapes
         // TODO: No longer has to be shared
         std::vector<std::shared_ptr<Tile>> m_tiles;
@@ -46,7 +49,6 @@ namespace Tetris {
         bool m_rightPressed{false};
         bool m_downPressed{false};
         bool m_upPressed{false};
-        bool m_gameOver{false};
 
         void ClearLines(const std::vector<int> &rowIndices);
 
@@ -68,6 +70,8 @@ namespace Tetris {
         void HandleKeyUp(const SDL_KeyboardEvent&);
 
         void Draw(SDL_Renderer* renderer) override;
+
+        void DrawScore(SDL_Renderer *renderer) const;
 
         void Tick(float dt) override;
     };

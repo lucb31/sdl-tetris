@@ -37,6 +37,7 @@ namespace Tetris {
             // Update tiles with survivor list
             m_tiles = survivors;
         }
+        m_score += rowIndices.size() * tileCols;
     }
 
     void Board::CheckForClearedLines() {
@@ -196,20 +197,6 @@ namespace Tetris {
         m_activeShape = std::make_shared<Shape>(tileCols / 2 * widthPerTile, heightPerTile * 2, shape.tilePositions);
     }
 
-    void Board::DrawGrid(SDL_Renderer *renderer) {
-        // NOTE: Optimization: We could just calculate and store the grid data. This never changes
-        // Even better: Shader :)
-        std::vector<SDL_FRect> rects;
-        rects.reserve(tiles);
-        for (int row = 0; row < tileRows; row++) {
-            for (int col = 0; col < tileCols; col++) {
-                rects.emplace_back(col * widthPerTile, row * heightPerTile, widthPerTile, heightPerTile);
-            }
-        }
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 25);
-        SDL_RenderRects(renderer, rects.data(), tiles);
-    }
-
     void Board::HandleKeyDown(const SDL_KeyboardEvent &e) {
         if (e.key == MoveLeft) {
             m_leftPressed = true;
@@ -255,7 +242,28 @@ namespace Tetris {
         for (const std::shared_ptr<Tile> &tile: m_tiles) {
             tile->Draw(renderer);
         }
+        DrawScore(renderer);
     }
+
+    void Board::DrawScore(SDL_Renderer *renderer) const {
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        SDL_RenderDebugTextFormat(renderer, boardSizeX + 50, 50, "Score: %i", m_score);
+    }
+
+    void Board::DrawGrid(SDL_Renderer *renderer) {
+        // NOTE: Optimization: We could just calculate and store the grid data. This never changes
+        // Even better: Shader :)
+        std::vector<SDL_FRect> rects;
+        rects.reserve(tiles);
+        for (int row = 0; row < tileRows; row++) {
+            for (int col = 0; col < tileCols; col++) {
+                rects.emplace_back(col * widthPerTile, row * heightPerTile, widthPerTile, heightPerTile);
+            }
+        }
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 25);
+        SDL_RenderRects(renderer, rects.data(), tiles);
+    }
+
 
     void Board::Tick(const float dt) {
         CalculateCollisions();
