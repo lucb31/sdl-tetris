@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}
         Tile.h
         Mat3.h
         Vec3.h
+        Benchmark/Instrumentor.h
 )
 target_sources(${PROJECT_NAME} PRIVATE main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE vendor)

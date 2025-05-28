@@ -4,6 +4,7 @@
 #include "Board.h"
 #include "Mat3.h"
 #include "Renderer.h"
+#include "Benchmark/Instrumentor.h"
 
 constexpr int targetFps = 60;
 constexpr float dt = 1.0f / targetFps;
@@ -28,9 +29,9 @@ int main() {
     }
 
     // Test cases for matrix x vector multiplication
-    Math::Mat3 m{1,4,7,2,5,8,3,6,9};
-    Math::Vec3 v{2,1,3};
-    Math::Vec3 res = m*v;
+    Math::Mat3 m{1, 4, 7, 2, 5, 8, 3, 6, 9};
+    Math::Vec3 v{2, 1, 3};
+    Math::Vec3 res = m * v;
     Math::Vec3 expectedRes{13, 31, 49};
     if (!std::equal(std::begin(res.e), std::end(res.e), std::begin(expectedRes.e))) {
         SDL_Log("Vec3 testcase failed");
@@ -46,6 +47,7 @@ int main() {
     SDL_Event event;
     SDL_zero(event);
 
+    Benchmark::Instrumentor::Instance().beginSession("Tetris");
     while (!quit) {
         const Uint64 frame_start_time = SDL_GetTicksNS();
 
@@ -57,6 +59,9 @@ int main() {
                 board.HandleKeyDown(event.key);
             } else if (event.type == SDL_EVENT_KEY_UP) {
                 board.HandleKeyUp(event.key);
+                if (event.key.key == SDLK_ESCAPE) {
+                    quit = true;
+                }
             }
         }
 
@@ -80,6 +85,7 @@ int main() {
         }
     }
 
+    Benchmark::Instrumentor::Instance().endSession();
     renderer.close();
     return 0;
 }

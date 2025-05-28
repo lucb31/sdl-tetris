@@ -6,6 +6,7 @@
 
 #include "Keymap.h"
 #include "Constants.h"
+#include "Benchmark/Instrumentor.h"
 #include "SDL3/SDL_log.h"
 
 namespace Tetris {
@@ -19,7 +20,7 @@ namespace Tetris {
             // Bounds for the current row
             const int rowMinY = rowIndex * heightPerTile;
             const int rowMaxY = (rowIndex + 1) * heightPerTile;
-            for (const auto &tile : m_tiles) {
+            for (const auto &tile: m_tiles) {
                 if (tile->position.y() > rowMaxY) {
                     // If below row -> Survives
                     survivors.push_back(tile);
@@ -41,6 +42,7 @@ namespace Tetris {
     }
 
     void Board::CheckForClearedLines() {
+        PROFILE_FUNCTION();
         // Retrieve list of all frozen tile bounding boxes
         std::vector<SDL_FRect> tileBBs;
         tileBBs.reserve(m_tiles.size());
@@ -89,6 +91,7 @@ namespace Tetris {
     }
 
     void Board::CalculateCollisions() {
+        PROFILE_FUNCTION();
         m_collisions.clear();
         if (m_activeShape == nullptr) {
             // We're only interested in collisions with for the active shape
@@ -118,6 +121,7 @@ namespace Tetris {
     }
 
     void Board::ProcessCollisions() {
+        PROFILE_FUNCTION();
         for (const auto &collision: m_collisions) {
             // Check position of intersection relative to position
             Math::Vec2 collisionDirection;
@@ -266,6 +270,7 @@ namespace Tetris {
 
 
     void Board::Tick(const float dt) {
+        PROFILE_FUNCTION();
         CalculateCollisions();
         ProcessCollisions();
 
