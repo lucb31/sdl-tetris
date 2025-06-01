@@ -44,6 +44,9 @@ namespace Tetris {
         std::shared_ptr<Shape> m_activeShape;
         std::vector<ShapeConfiguration> m_shapeConfigurations;
 
+        // Board boundaries
+        std::vector<SDL_FRect> m_boardBBs;
+
         // Keyboard control
         bool m_leftPressed{false};
         bool m_rightPressed{false};
@@ -56,13 +59,15 @@ namespace Tetris {
 
         static std::vector<SDL_FRect> GetBoardBoundingBoxes();
 
-        void CalculateCollisions();
+        void CalculateCollisions(std::vector<Collision> &collisions) const;
 
         void ProcessCollisions();
 
         void AddRandomShape();
 
-        static void DrawGrid(SDL_Renderer *renderer);
+        void AttemptRotation(const float &rotation) const;
+
+        void DrawGrid(SDL_Renderer *renderer) const;
     public:
         Board();
 

@@ -70,31 +70,30 @@ namespace Tetris {
                 rowsToClear.push_back(row);
             }
         }
-        if (rowsToClear.size() > 0) {
+        if (!rowsToClear.empty()) {
             ClearLines(rowsToClear);
         }
     }
 
-    // TODO: Should just store this in memory
     std::vector<SDL_FRect> Board::GetBoardBoundingBoxes() {
         std::vector<SDL_FRect> bbs;
         bbs.reserve(4);
         // Floor
-        bbs.emplace_back(0.0f, boardSizeY, boardSizeX, 10.0f);
+        bbs.emplace_back(-100, boardSizeY, boardSizeX + 200.0f, 100.0f);
         // Ceiling
-        bbs.emplace_back(0.0f, -10.0f, boardSizeX, 9.9f);
+        bbs.emplace_back(-100.0f, -100.0f, boardSizeX + 200.0f, 99);
         // Left side
-        bbs.emplace_back(-10.0f, 0.0f, 10.0f, boardSizeY);
+        bbs.emplace_back(-100.0f, -100.0f, 100, boardSizeY + 200.0f);
         // Right side
-        bbs.emplace_back(boardSizeX, 0.0f, 10.0f, boardSizeY);
+        bbs.emplace_back(boardSizeX, -100.0f, 100.0f, boardSizeY + 200.0f);
         return bbs;
     }
 
-    void Board::CalculateCollisions() {
+    void Board::CalculateCollisions(std::vector<Collision> &collisions) const {
         PROFILE_FUNCTION();
-        m_collisions.clear();
+        collisions.clear();
         if (m_activeShape == nullptr) {
-            // We're only interested in collisions with for the active shape
+            // We're only interested in collisions for the active shape
             return;
         }
         const auto activeShapeBBs = m_activeShape->GetCollisionBBs();
@@ -105,16 +104,16 @@ namespace Tetris {
                 const SDL_FRect tileBB = tile->BB();
                 if (SDL_GetRectIntersectionFloat(bb.get(), &tileBB, &intersection)) {
                     // Register collision to be handled in next process step
-                    m_collisions.emplace_back(Collision{*bb, tileBB, intersection});
+                    collisions.emplace_back(Collision{*bb, tileBB, intersection});
                 }
             }
 
             // Check collisions with bounding boxes
-            for (const auto &boardBB: GetBoardBoundingBoxes()) {
+            for (const auto &boardBB: m_boardBBs) {
                 SDL_FRect intersection{};
                 if (SDL_GetRectIntersectionFloat(bb.get(), &boardBB, &intersection)) {
                     // Register collision to be handled in next process step
-                    m_collisions.emplace_back(Collision{*bb, boardBB, intersection});
+                    collisions.emplace_back(Collision{*bb, boardBB, intersection});
                 }
             }
         }
@@ -189,6 +188,8 @@ namespace Tetris {
         tConfig.tilePositions.emplace_back(32, 16);
         m_shapeConfigurations.push_back(tConfig);
 
+        // Initialize Board bounding boxes
+        m_boardBBs = GetBoardBoundingBoxes();
         AddRandomShape();
     }
 
@@ -201,6 +202,27 @@ namespace Tetris {
         m_activeShape = std::make_shared<Shape>(tileCols / 2 * widthPerTile, heightPerTile * 2, shape.tilePositions);
     }
 
+    void Board::AttemptRotation(const float &rotation) const {
+        // (Temporarily) rotate shape
+        m_activeShape->Rotate(rotation);
+
+        // Update transform via 0s tick
+        m_activeShape->Tick(0.0);
+
+        // Check collisions
+        std::vector<Collision> collisions;
+        CalculateCollisions(collisions);
+
+        if (!collisions.empty()) {
+            // Rotate back if collided
+            SDL_Log("Reverting");
+            m_activeShape->Rotate(-rotation);
+            // Update transform via 0s tick
+            m_activeShape->Tick(0.0);
+        }
+    }
+
+
     void Board::HandleKeyDown(const SDL_KeyboardEvent &e) {
         if (e.key == MoveLeft) {
             m_leftPressed = true;
@@ -212,11 +234,11 @@ namespace Tetris {
             m_upPressed = true;
         } else if (e.key == RotateLeft) {
             if (m_activeShape != nullptr) {
-                m_activeShape->Rotate(-M_PI / 2);
+                AttemptRotation(-M_PI / 2);
             }
         } else if (e.key == RotateRight) {
             if (m_activeShape != nullptr) {
-                m_activeShape->Rotate(M_PI / 2);
+                AttemptRotation(M_PI / 2);
             }
         }
     }
@@ -254,7 +276,7 @@ namespace Tetris {
         SDL_RenderDebugTextFormat(renderer, boardSizeX + 50, 50, "Score: %i", m_score);
     }
 
-    void Board::DrawGrid(SDL_Renderer *renderer) {
+    void Board::DrawGrid(SDL_Renderer *renderer) const {
         // NOTE: Optimization: We could just calculate and store the grid data. This never changes
         // Even better: Shader :)
         std::vector<SDL_FRect> rects;
@@ -266,16 +288,21 @@ namespace Tetris {
         }
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 25);
         SDL_RenderRects(renderer, rects.data(), tiles);
+
+        // Debug: Draw bounding boxes
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        SDL_RenderRects(renderer, m_boardBBs.data(), m_boardBBs.size());
     }
 
 
     void Board::Tick(const float dt) {
         PROFILE_FUNCTION();
-        CalculateCollisions();
+        CalculateCollisions(m_collisions);
         ProcessCollisions();
 
         if (m_activeShape != nullptr) {
             if (m_activeShape->IsGrounded() && !m_gameOver) {
+                // Active shape has hit the ground
                 // Move tiles
                 const auto tiles = m_activeShape->GetTiles();
                 const Math::Mat3 shapeTransform = m_activeShape->GetTransform();

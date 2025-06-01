@@ -39,6 +39,10 @@ namespace Tetris {
         // Draw shape center
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
         SDL_RenderDebugText(renderer, m_position.x(), m_position.y(), "X");
+
+        // Debug display shape position
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        SDL_RenderDebugTextFormat(renderer, boardSizeX + 50, 100, "Position: (%.1f, %.1f)", m_position.x(), m_position.y());
     }
 
     void Shape::Tick(const float dt) {
@@ -56,6 +60,7 @@ namespace Tetris {
         }
 
         // Collision with floor
+        // TODO: Check if we can get rid of this. Collision should only be handled in board
         if (m_position.y() >= (tileRows - 1) * heightPerTile) {
             Freeze();
         }
