@@ -102,18 +102,18 @@ namespace Tetris {
             for (const auto &tile: m_tiles) {
                 SDL_FRect intersection{};
                 const SDL_FRect tileBB = tile->BB();
-                if (SDL_GetRectIntersectionFloat(bb.get(), &tileBB, &intersection)) {
+                if (SDL_GetRectIntersectionFloat(&bb, &tileBB, &intersection)) {
                     // Register collision to be handled in next process step
-                    collisions.emplace_back(Collision{*bb, tileBB, intersection});
+                    collisions.emplace_back(Collision{bb, tileBB, intersection});
                 }
             }
 
             // Check collisions with bounding boxes
             for (const auto &boardBB: m_boardBBs) {
                 SDL_FRect intersection{};
-                if (SDL_GetRectIntersectionFloat(bb.get(), &boardBB, &intersection)) {
+                if (SDL_GetRectIntersectionFloat(&bb, &boardBB, &intersection)) {
                     // Register collision to be handled in next process step
-                    collisions.emplace_back(Collision{*bb, boardBB, intersection});
+                    collisions.emplace_back(Collision{bb, boardBB, intersection});
                 }
             }
         }
@@ -198,8 +198,7 @@ namespace Tetris {
         const int shapeIdx = SDL_rand(m_shapeConfigurations.size());
         const auto shape = m_shapeConfigurations[shapeIdx];
 
-        // Probably dosent have to be shared
-        m_activeShape = std::make_shared<Shape>(tileCols / 2 * widthPerTile, heightPerTile * 2, shape.tilePositions);
+        m_activeShape = std::make_unique<Shape>(tileCols / 2 * widthPerTile, heightPerTile * 2, shape.tilePositions);
     }
 
     void Board::AttemptRotation(const float &rotation) const {
@@ -310,7 +309,6 @@ namespace Tetris {
                 for (const auto &tile: tiles) {
                     // Transform tile position to global pos
                     const Math::Vec3 globalPos = shapeTransform * Math::Vec3(tile->position.x(), tile->position.y(), 1);
-                    // TODO: No need for a shared pointer
                     m_tiles.emplace_back(std::make_shared<Tile>(globalPos.x(), globalPos.y()));
                 }
                 m_activeShape.reset();

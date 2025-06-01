@@ -58,21 +58,15 @@ namespace Tetris {
             // Pointer solution would be more elegant
             tile->parentTransform = transform;
         }
-
-        // Collision with floor
-        // TODO: Check if we can get rid of this. Collision should only be handled in board
-        if (m_position.y() >= (tileRows - 1) * heightPerTile) {
-            Freeze();
-        }
     }
 
     // Shared ptr probably not required here. Can just copy
-    std::vector<std::shared_ptr<SDL_FRect>> Shape::GetCollisionBBs() const {
+    std::vector<SDL_FRect> Shape::GetCollisionBBs() const {
         // Calculate BBs for all tiles
-        std::vector<std::shared_ptr<SDL_FRect> > collisionBBs;
+        std::vector<SDL_FRect> collisionBBs;
         collisionBBs.reserve(m_tiles.size());
         for (const auto &tile: m_tiles) {
-            collisionBBs.emplace_back(std::make_unique<SDL_FRect>(tile->BB()));
+            collisionBBs.emplace_back(tile->BB());
         }
         return collisionBBs;
     }

@@ -20,6 +20,8 @@ namespace Tetris {
         float m_speed = 150;
         bool m_grounded = false;
 
+        // Tiles need to be shared ptrs since they're going to get
+        // passed to the board once shape is placed
         std::vector<std::shared_ptr<Tile> > m_tiles;
         Math::Vec2 m_position;
         float m_rotation = 0.0f;
@@ -47,7 +49,7 @@ namespace Tetris {
 
         void Tick(float dt) override;
 
-        std::vector<std::shared_ptr<SDL_FRect>> GetCollisionBBs() const;
+        std::vector<SDL_FRect> GetCollisionBBs() const;
 
         Math::Mat3 GetTransform() const;
 

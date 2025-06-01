@@ -31,20 +31,17 @@ namespace Tetris {
 
     class Board : public GameObject {
     private:
-        std::vector<Collision> m_collisions;
-        std::unique_ptr<TickTimer> m_tickTimer;
-
         // Game state
         bool m_gameOver{false};
         int m_score{0};
-        // Shapes
-        // TODO: No longer has to be shared
-        std::vector<std::shared_ptr<Tile>> m_tiles;
-        // TODO: Unique ptr instead
-        std::shared_ptr<Shape> m_activeShape;
-        std::vector<ShapeConfiguration> m_shapeConfigurations;
+        // Needs to be shared to avoid copies in line clear method
+        std::vector<std::shared_ptr<Tile> > m_tiles;
+        std::unique_ptr<Shape> m_activeShape;
+        std::vector<Collision> m_collisions;
+        std::unique_ptr<TickTimer> m_tickTimer;
 
-        // Board boundaries
+        // Board setup
+        std::vector<ShapeConfiguration> m_shapeConfigurations;
         std::vector<SDL_FRect> m_boardBBs;
 
         // Keyboard control
@@ -68,13 +65,15 @@ namespace Tetris {
         void AttemptRotation(const float &rotation) const;
 
         void DrawGrid(SDL_Renderer *renderer) const;
+
     public:
         Board();
 
-        void HandleKeyDown(const SDL_KeyboardEvent&);
-        void HandleKeyUp(const SDL_KeyboardEvent&);
+        void HandleKeyDown(const SDL_KeyboardEvent &);
 
-        void Draw(SDL_Renderer* renderer) override;
+        void HandleKeyUp(const SDL_KeyboardEvent &);
+
+        void Draw(SDL_Renderer *renderer) override;
 
         void DrawScore(SDL_Renderer *renderer) const;
 
