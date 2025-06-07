@@ -68,8 +68,9 @@ int main() {
         // Advance frame
         board.Tick(dt);
 
-        // Render current frame
-        renderer.render(&board);
+        renderer.BeginRender();
+        board.Draw(nullptr);
+        renderer.EndRender();
         frames++;
 
         // Cap FPS: Delay render of next frame

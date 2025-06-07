@@ -188,9 +188,50 @@ namespace Tetris {
         tConfig.tilePositions.emplace_back(32, 16);
         m_shapeConfigurations.push_back(tConfig);
 
+        SetupRendering();
+
         // Initialize Board bounding boxes
         m_boardBBs = GetBoardBoundingBoxes();
         AddRandomShape();
+    }
+
+    Board::~Board() {
+        glDeleteVertexArrays(1, &m_vao);
+        glDeleteBuffers(1, &m_vbo);
+        glDeleteBuffers(1, &m_ebo);
+    }
+
+    void Board::SetupRendering() {
+        constexpr unsigned int indices[] = {0, 1, 2, 0, 2, 3};
+
+        // Setup buffers
+        glGenVertexArrays(1, &m_vao);
+        glGenBuffers(1, &m_vbo);
+        glGenBuffers(1, &m_ebo);
+        glBindVertexArray(m_vao);
+
+        // Load shaders
+        m_shader = Renderer::LoadShader("src/Shaders/rect.vert", "src/Shaders/gridv2.frag");
+        // Bind vertex data
+        constexpr float boardWidth = widthPerTile * tileCols;
+        constexpr float boardHeight = heightPerTile * tileRows;
+        constexpr float boardBoundaries[] = {
+            0, 0, // TL
+            boardWidth, 0, // TR
+            boardWidth, boardHeight, // BR
+            0, boardHeight, // BL
+        };
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(boardBoundaries), boardBoundaries, GL_STATIC_DRAW);
+
+        // Bind index data
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        // Bind position attribute
+        const auto posLocation = glGetAttribLocation(m_shader, "pos");
+        glVertexAttribPointer(posLocation, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
+        glEnableVertexAttribArray(posLocation);
     }
 
     void Board::AddRandomShape() {
@@ -255,19 +296,29 @@ namespace Tetris {
     }
 
     void Board::Draw(SDL_Renderer *renderer) {
+        // Draw game over message
         if (m_gameOver) {
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-            SDL_RenderDebugText(renderer, boardSizeX / 2, boardSizeY / 2, "Game Over!");
+            // TODO: Needs fonts
+            // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            // SDL_RenderDebugText(renderer, boardSizeX / 2, boardSizeY / 2, "Game Over!");
             return;
         }
-        DrawGrid(renderer);
+        DrawGrid();
         if (m_activeShape != nullptr) {
             m_activeShape->Draw(renderer);
         }
-        for (const std::shared_ptr<Tile> &tile: m_tiles) {
-            tile->Draw(renderer);
+        DrawTiles();
+        // TODO: Score rendering needs fonts
+        // DrawScore(renderer);
+    }
+
+    void Board::DrawTiles() const {
+        std::vector<SDL_FRect> tiles;
+        tiles.reserve(m_tiles.size());
+        for (const auto &tile: m_tiles) {
+            tiles.emplace_back(tile->BB());
         }
-        DrawScore(renderer);
+        Renderer::DrawSDLRects(tiles.data(), tiles.size());
     }
 
     void Board::DrawScore(SDL_Renderer *renderer) const {
@@ -275,22 +326,25 @@ namespace Tetris {
         SDL_RenderDebugTextFormat(renderer, boardSizeX + 50, 50, "Score: %i", m_score);
     }
 
-    void Board::DrawGrid(SDL_Renderer *renderer) const {
-        // NOTE: Optimization: We could just calculate and store the grid data. This never changes
-        // Even better: Shader :)
-        std::vector<SDL_FRect> rects;
-        rects.reserve(tiles);
-        for (int row = 0; row < tileRows; row++) {
-            for (int col = 0; col < tileCols; col++) {
-                rects.emplace_back(col * widthPerTile, row * heightPerTile, widthPerTile, heightPerTile);
-            }
-        }
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 25);
-        SDL_RenderRects(renderer, rects.data(), tiles);
+    void Board::DrawGrid() const {
+        // Bind shader
+        glUseProgram(m_shader);
+        Renderer::CheckGLError("glUseProgram");
+        // Bind mvp uniform
+        const auto mvpLocation = glGetUniformLocation(m_shader, "mvp");
+        glUniformMatrix4fv(mvpLocation, 1, false, boardMvp);
+        Renderer::CheckGLError("glUniformMatrix4fv");
+        // Bind vertex attributes
+        glBindVertexArray(m_vao);
+        Renderer::CheckGLError("glBindVertexArray");
+        // Draw
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        Renderer::CheckGLError("glDrawElements");
+        glBindVertexArray(0);
 
         // Debug: Draw bounding boxes
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        SDL_RenderRects(renderer, m_boardBBs.data(), m_boardBBs.size());
+        constexpr std::array<float, 4> boundingBoxesColor = {1,0,0,1};
+        Renderer::DrawSDLRects(m_boardBBs.data(), m_boardBBs.size(), boundingBoxesColor);
     }
 
 

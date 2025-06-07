@@ -10,7 +10,7 @@ namespace Tetris {
     constexpr int heightPerTile = 32;
     constexpr int tileRows = 20;
     constexpr int tileCols = 10;
-    constexpr int tiles = tileRows * tileCols;
+    constexpr int totalNrOfTiles = tileRows * tileCols;
     constexpr int boardSizeX = tileCols * widthPerTile;
     constexpr int boardSizeY = tileRows * heightPerTile;
 }

@@ -18,4 +18,9 @@ add_executable(${PROJECT_NAME}
         Benchmark/Instrumentor.h
 )
 target_sources(${PROJECT_NAME} PRIVATE main.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE vendor)
+
+# External vendors
+find_package(GLEW 2.0 REQUIRED)
+find_package(OpenGL REQUIRED)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE vendor GLEW::GLEW ${OPENGL_LIBRARY})

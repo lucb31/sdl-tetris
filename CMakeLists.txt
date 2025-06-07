@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.31)
-project(sdl_playground)
+project(sdl_tetris)
 
 set(CMAKE_CXX_STANDARD 23)
 

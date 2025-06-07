@@ -7,6 +7,7 @@
 #include <cmath>
 
 #include "Constants.h"
+#include "Renderer.h"
 
 namespace Tetris {
     void Shape::CalculateVelocity() {
@@ -32,9 +33,13 @@ namespace Tetris {
 
     void Shape::Draw(SDL_Renderer *renderer) {
         // Draw tiles
+        std::vector<SDL_FRect> tiles;
+        tiles.reserve(m_tiles.size());
         for (const auto &tile: m_tiles) {
-            tile->Draw(renderer);
+            tiles.emplace_back(tile->BB());
         }
+        Renderer::DrawSDLRects(tiles.data(), tiles.size());
+        return;
 
         // Draw shape center
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);

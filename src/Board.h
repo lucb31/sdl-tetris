@@ -11,6 +11,7 @@
 #include "SDL3/SDL_events.h"
 
 #include "GameObject.h"
+#include "Renderer.h"
 #include "Shape.h"
 #include "TickTimer.h"
 
@@ -21,6 +22,14 @@ struct Collision {
 };
 
 namespace Tetris {
+    // Rendering constants
+    constexpr float boardMvp[] = {
+        2.0f / kScreenWidth, 0, 0, 0,
+        0, -2.0f / kScreenHeight, 0, 0,
+        0, 0, 1, 0,
+        -1, 1, 0, 1,
+    };
+
     struct ShapeConfiguration {
         std::vector<Math::Vec2> tilePositions;
 
@@ -44,6 +53,9 @@ namespace Tetris {
         std::vector<ShapeConfiguration> m_shapeConfigurations;
         std::vector<SDL_FRect> m_boardBBs;
 
+        // Rendering
+        GLuint m_shader{}, m_ebo{}, m_vao{}, m_vbo{};
+
         // Keyboard control
         bool m_leftPressed{false};
         bool m_rightPressed{false};
@@ -64,18 +76,21 @@ namespace Tetris {
 
         void AttemptRotation(const float &rotation) const;
 
-        void DrawGrid(SDL_Renderer *renderer) const;
+        void DrawGrid() const;
+        void DrawTiles() const;
+        void DrawScore(SDL_Renderer *renderer) const;
 
     public:
         Board();
+        ~Board();
+
+        void SetupRendering();
 
         void HandleKeyDown(const SDL_KeyboardEvent &);
 
         void HandleKeyUp(const SDL_KeyboardEvent &);
 
         void Draw(SDL_Renderer *renderer) override;
-
-        void DrawScore(SDL_Renderer *renderer) const;
 
         void Tick(float dt) override;
     };
