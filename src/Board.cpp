@@ -296,6 +296,7 @@ namespace Tetris {
     }
 
     void Board::Draw(SDL_Renderer *renderer) {
+        DrawGrid();
         // Draw game over message
         if (m_gameOver) {
             // TODO: Needs fonts
@@ -303,7 +304,6 @@ namespace Tetris {
             // SDL_RenderDebugText(renderer, boardSizeX / 2, boardSizeY / 2, "Game Over!");
             return;
         }
-        DrawGrid();
         if (m_activeShape != nullptr) {
             m_activeShape->Draw(renderer);
         }

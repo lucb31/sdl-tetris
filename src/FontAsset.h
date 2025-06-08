@@ -14,6 +14,8 @@ class FontAsset {
     struct Character {
         int w,h;
         float minU, maxU, minV, maxV;
+        int offsetY;
+        int xAdvance;
     };
 
 public:
@@ -26,10 +28,10 @@ public:
 
 private:
     std::map<char, Character> m_characters;
-    int m_fontSize;
+    int m_fontSize{0}; int m_atlasWidth{0}; int m_atlasHeight{0};
     Texture m_texture;
 
-    Character SampleCharacter(int charX, int charY, int charWidth, int charHeight);
+    Character SampleCharacter(int charX, int charY, int charWidth, int charHeight, int offsetY, int xAdvance) const;
 };
 
 

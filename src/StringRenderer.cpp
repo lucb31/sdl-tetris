@@ -5,7 +5,9 @@
 #include "StringRenderer.h"
 #include <SDL3/SDL.h>
 
-StringRenderer::StringRenderer() {
+StringRenderer::StringRenderer(const int capacity) {
+    m_stringBufferCapacity = capacity;
+
     // Load font
     m_font = FontAsset();
     // TODO: Load png instead. JPG Dosent have opacity
@@ -41,11 +43,12 @@ StringRenderer::StringRenderer() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), indices.data(), GL_STATIC_DRAW);
 
     // Bind position & uv attribute
-    const auto posLocation = glGetAttribLocation((GLuint)m_shader, "pos");
+    const auto posLocation = glGetAttribLocation((GLuint) m_shader, "pos");
     glVertexAttribPointer(posLocation, 2, GL_FLOAT, GL_FALSE, vertexAttributes * sizeof(float), nullptr);
     glEnableVertexAttribArray(posLocation);
-    const auto uvLocation = glGetAttribLocation((GLuint)m_shader, "uv");
-    glVertexAttribPointer(uvLocation, 2, GL_FLOAT, GL_FALSE, vertexAttributes * sizeof(float), (void*)(2 * sizeof(float)));
+    const auto uvLocation = glGetAttribLocation((GLuint) m_shader, "uv");
+    glVertexAttribPointer(uvLocation, 2, GL_FLOAT, GL_FALSE, vertexAttributes * sizeof(float),
+                          (void *) (2 * sizeof(float)));
     glEnableVertexAttribArray(uvLocation);
 }
 
@@ -66,12 +69,16 @@ void StringRenderer::Render() {
     m_font.GetTexture()->setActive();
 
     // Draw
-    glDrawElements(GL_TRIANGLES, 6*m_stringBufferSize, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 6 * m_stringBufferSize, GL_UNSIGNED_INT, 0);
     Renderer::CheckGLError("glDrawElements");
     glBindVertexArray(0);
 }
 
 void StringRenderer::SetString(const std::string &str) {
+    if (str.size() > m_stringBufferCapacity) {
+        SDL_LogError(0, "Out of bounds, String is too long. Has %i, needs %i", m_stringBufferCapacity, str.size());
+        return;
+    }
     // Fill VBO buffer
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     std::vector<float> vertices = SampleCharacters(str);
@@ -82,16 +89,17 @@ void StringRenderer::SetString(const std::string &str) {
 }
 
 std::vector<float> StringRenderer::SampleCharacters(const std::string &str) {
+    float inputYCenterline = 200;
     std::vector<float> vertices;
     vertices.reserve(str.size() * 4 * 4);
 
-    float startX = 900;
-    float startY = 200;
+    float startX = 400;
     for (const char &c: str) {
         const auto character = m_font.GetCharacter(c);
 
         const float endX = startX + character.w;
-        const float endY = startY + character.h;
+        const float startY = inputYCenterline - character.h / 2 + character.offsetY / 2;
+        const float endY = inputYCenterline + character.h / 2 + character.offsetY / 2;
 
         // TODO: Consider line height & offset
         std::vector<float> characterVertices = {
@@ -101,7 +109,7 @@ std::vector<float> StringRenderer::SampleCharacters(const std::string &str) {
             startX, endY, character.minU, character.maxV,
         };
         vertices.insert(vertices.end(), characterVertices.begin(), characterVertices.end());
-        startX = endX;
+        startX += character.xAdvance;
     }
     return vertices;
 }

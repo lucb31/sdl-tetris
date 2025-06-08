@@ -14,7 +14,8 @@
 
 class StringRenderer {
 public:
-    StringRenderer();
+    StringRenderer() : StringRenderer(16) {}
+    explicit StringRenderer(const int capacity);
 
     void Render();
 
@@ -30,7 +31,7 @@ private:
     GLuint m_vao{}, m_vbo{}, m_ebo{};
 
     // Number of characters the string buffer can hold
-    unsigned int m_stringBufferCapacity{16};
+    unsigned int m_stringBufferCapacity;
     // Number of characters currently stored
     unsigned int m_stringBufferSize{0};
 };

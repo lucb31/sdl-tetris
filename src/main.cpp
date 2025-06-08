@@ -56,7 +56,7 @@ int main() {
         0, 0, 1, 0,
         -1, 1, 0, 1,
     };
-    stringRenderer.SetString("abca");
+    stringRenderer.SetString("Game Over");
 
     Benchmark::Instrumentor::Instance().beginSession("Tetris");
     while (!quit) {
@@ -80,8 +80,8 @@ int main() {
         board.Tick(dt);
 
         renderer.BeginRender();
-        stringRenderer.Render();
         board.Draw(nullptr);
+        stringRenderer.Render();
         renderer.EndRender();
         frames++;
 
