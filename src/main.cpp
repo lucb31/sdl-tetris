@@ -4,6 +4,7 @@
 #include "Board.h"
 #include "Mat3.h"
 #include "Renderer.h"
+#include "StringRenderer.h"
 #include "Benchmark/Instrumentor.h"
 
 constexpr int targetFps = 60;
@@ -47,6 +48,16 @@ int main() {
     SDL_Event event;
     SDL_zero(event);
 
+    // String rendering test code
+    StringRenderer stringRenderer;
+    stringRenderer.proj = {
+        2.0f / kScreenWidth, 0, 0, 0,
+        0, -2.0f / kScreenHeight, 0, 0,
+        0, 0, 1, 0,
+        -1, 1, 0, 1,
+    };
+    stringRenderer.SetString("abca");
+
     Benchmark::Instrumentor::Instance().beginSession("Tetris");
     while (!quit) {
         const Uint64 frame_start_time = SDL_GetTicksNS();
@@ -69,6 +80,7 @@ int main() {
         board.Tick(dt);
 
         renderer.BeginRender();
+        stringRenderer.Render();
         board.Draw(nullptr);
         renderer.EndRender();
         frames++;

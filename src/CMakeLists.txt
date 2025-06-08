@@ -16,6 +16,15 @@ add_executable(${PROJECT_NAME}
         Mat3.h
         Vec3.h
         Benchmark/Instrumentor.h
+        Texture.cpp
+        Texture.h
+        stb_image.h
+        StringRenderer.cpp
+        StringRenderer.h
+        Shader.cpp
+        Shader.h
+        FontAsset.cpp
+        FontAsset.h
 )
 target_sources(${PROJECT_NAME} PRIVATE main.cpp)
 
