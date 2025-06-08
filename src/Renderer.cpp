@@ -36,8 +36,10 @@ bool Renderer::init() {
     const GLubyte *version = glGetString(GL_VERSION);
     SDL_LogInfo(0, "Initialized Renderer '%s' with OpenGL Version '%s'", renderer, version);
 
-    // Place window on second monitor
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     return true;
+    // Place window on second monitor
     if (!SDL_SetWindowPosition(m_window, -3000, 200)) {
         SDL_Log("SDL could reposition window. Received error %s\n", SDL_GetError());
         return false;

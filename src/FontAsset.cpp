@@ -6,7 +6,6 @@
 
 void FontAsset::Load(const std::string &texturePath, const std::string &xmlPath) {
     // Load texture
-    // TODO: Load png
     m_texture.load(texturePath);
     m_texture.generate();
 

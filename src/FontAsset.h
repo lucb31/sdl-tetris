@@ -5,7 +5,7 @@
 #ifndef FONTASSET_H
 #define FONTASSET_H
 #include <string>
-#include <map>
+#include <unordered_map>
 
 #include "Texture.h"
 
@@ -28,7 +28,7 @@ public:
     Texture *GetTexture() { return &m_texture; };
 
 private:
-    std::map<char, Character> m_characters;
+    std::unordered_map<char, Character> m_characters;
     int m_atlasWidth{0};
     int m_atlasHeight{0};
     Texture m_texture;
