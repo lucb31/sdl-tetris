@@ -4,14 +4,18 @@
 
 #include "StringRenderer.h"
 #include <SDL3/SDL.h>
+#include <glm/glm.hpp>
+
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 StringRenderer::StringRenderer(const int capacity) {
     m_stringBufferCapacity = capacity;
 
     // Load font
     m_font = FontAsset();
-    // TODO: Load png instead. JPG Dosent have opacity
-    m_font.Load("assets/256-font.jpg");
+    m_font.Load("assets/256-font.jpg", "assets/256-font.xml");
 
     // Load shader
     m_shader.Load("src/Shaders/font.vert", "src/Shaders/font.frag");
@@ -50,6 +54,8 @@ StringRenderer::StringRenderer(const int capacity) {
     glVertexAttribPointer(uvLocation, 2, GL_FLOAT, GL_FALSE, vertexAttributes * sizeof(float),
                           (void *) (2 * sizeof(float)));
     glEnableVertexAttribArray(uvLocation);
+
+    UpdateTransform();
 }
 
 void StringRenderer::Render() {
@@ -58,7 +64,8 @@ void StringRenderer::Render() {
 
     // Bind mvp uniform
     const auto mvpLocation = glGetUniformLocation(static_cast<GLuint>(m_shader), "mvp");
-    glUniformMatrix4fv(mvpLocation, 1, false, proj.data());
+    // Better: Value ptr
+    glUniformMatrix4fv(mvpLocation, 1, GL_FALSE, glm::value_ptr(m_transform));
     Renderer::CheckGLError("glUniformMatrix4fv");
 
     // Bind vertex attributes
@@ -76,6 +83,7 @@ void StringRenderer::Render() {
 
 void StringRenderer::SetString(const std::string &str) {
     if (str.size() > m_stringBufferCapacity) {
+        // Better: Reallocate bigger buffer
         SDL_LogError(0, "Out of bounds, String is too long. Has %i, needs %i", m_stringBufferCapacity, str.size());
         return;
     }
@@ -89,11 +97,11 @@ void StringRenderer::SetString(const std::string &str) {
 }
 
 std::vector<float> StringRenderer::SampleCharacters(const std::string &str) {
-    float inputYCenterline = 200;
+    float inputYCenterline = 0.0f;
     std::vector<float> vertices;
     vertices.reserve(str.size() * 4 * 4);
 
-    float startX = 400;
+    float startX = 0.0f;
     for (const char &c: str) {
         const auto character = m_font.GetCharacter(c);
 
@@ -101,7 +109,6 @@ std::vector<float> StringRenderer::SampleCharacters(const std::string &str) {
         const float startY = inputYCenterline - character.h / 2 + character.offsetY / 2;
         const float endY = inputYCenterline + character.h / 2 + character.offsetY / 2;
 
-        // TODO: Consider line height & offset
         std::vector<float> characterVertices = {
             startX, startY, character.minU, character.minV,
             endX, startY, character.maxU, character.minV,
@@ -112,4 +119,15 @@ std::vector<float> StringRenderer::SampleCharacters(const std::string &str) {
         startX += character.xAdvance;
     }
     return vertices;
+}
+
+void StringRenderer::SetPosition(const glm::vec2 pos) {
+    m_position = pos;
+    UpdateTransform();
+}
+
+void StringRenderer::UpdateTransform() {
+    glm::mat4 proj = glm::ortho(0.0f, (float)kScreenWidth, (float)kScreenHeight, 0.0f);
+    glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(m_position.x, m_position.y, 0.0f));
+    m_transform = proj*translate;
 }

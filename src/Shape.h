@@ -45,7 +45,7 @@ namespace Tetris {
 
         void Rotate(float radians);
 
-        void Draw(SDL_Renderer *) override;
+        void Draw() override;
 
         void Tick(float dt) override;
 

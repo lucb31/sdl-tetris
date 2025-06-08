@@ -39,6 +39,7 @@ namespace Tetris {
             m_tiles = survivors;
         }
         m_score += rowIndices.size() * tileCols;
+        m_scoreString.SetString(std::format("Score: {}", m_score));
     }
 
     void Board::CheckForClearedLines() {
@@ -193,6 +194,14 @@ namespace Tetris {
         // Initialize Board bounding boxes
         m_boardBBs = GetBoardBoundingBoxes();
         AddRandomShape();
+
+        // Initialize UI strings
+        m_gameOverString = StringRenderer();
+        m_gameOverString.SetPosition(glm::vec2(kScreenWidth / 2, kScreenHeight / 2));
+        m_gameOverString.SetString("Game Over");
+        m_scoreString = StringRenderer();
+        m_scoreString.SetPosition(glm::vec2(boardSizeX + 50, 50));
+        m_scoreString.SetString("Score: 0");
     }
 
     Board::~Board() {
@@ -295,21 +304,18 @@ namespace Tetris {
         }
     }
 
-    void Board::Draw(SDL_Renderer *renderer) {
+    void Board::Draw() {
         DrawGrid();
         // Draw game over message
         if (m_gameOver) {
-            // TODO: Needs fonts
-            // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-            // SDL_RenderDebugText(renderer, boardSizeX / 2, boardSizeY / 2, "Game Over!");
+            m_gameOverString.Render();
             return;
         }
         if (m_activeShape != nullptr) {
-            m_activeShape->Draw(renderer);
+            m_activeShape->Draw();
         }
         DrawTiles();
-        // TODO: Score rendering needs fonts
-        // DrawScore(renderer);
+        DrawScore();
     }
 
     void Board::DrawTiles() const {
@@ -321,9 +327,8 @@ namespace Tetris {
         Renderer::DrawSDLRects(tiles.data(), tiles.size());
     }
 
-    void Board::DrawScore(SDL_Renderer *renderer) const {
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        SDL_RenderDebugTextFormat(renderer, boardSizeX + 50, 50, "Score: %i", m_score);
+    void Board::DrawScore() {
+        m_scoreString.Render();
     }
 
     void Board::DrawGrid() const {
@@ -343,7 +348,7 @@ namespace Tetris {
         glBindVertexArray(0);
 
         // Debug: Draw bounding boxes
-        constexpr std::array<float, 4> boundingBoxesColor = {1,0,0,1};
+        constexpr std::array<float, 4> boundingBoxesColor = {1, 0, 0, 1};
         Renderer::DrawSDLRects(m_boardBBs.data(), m_boardBBs.size(), boundingBoxesColor);
     }
 

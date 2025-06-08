@@ -4,20 +4,17 @@
 
 #include "SDL3/SDL_log.h"
 
-void FontAsset::Load(const std::string &filepath) {
-    // FIX: Pngs were not loaded correctly
-    //m_texture.load("assets/test-font.png");
-
+void FontAsset::Load(const std::string &texturePath, const std::string &xmlPath) {
     // Load texture
-    m_texture.load(filepath);
+    // TODO: Load png
+    m_texture.load(texturePath);
     m_texture.generate();
-    m_fontSize = 24;
 
     // Load config
     pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_file("assets/256-font.xml");
+    pugi::xml_parse_result result = doc.load_file(xmlPath.c_str());
     if (!result) {
-        SDL_LogError(0, "Could not parse xml ");
+        SDL_LogError(0, "Could not parse xml from path '%s'", xmlPath.c_str());
         return;
     }
     m_atlasWidth = doc.child("font").child("common").attribute("scaleW").as_int();

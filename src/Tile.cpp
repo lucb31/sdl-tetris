@@ -26,6 +26,7 @@ namespace Tetris {
     }
 
     // Render floating point bb as outline
+    // @deprecated
     void Tile::DrawRealPosition(SDL_Renderer *renderer) const {
         const Math::Vec3 globalPos = GetGlobalTopLeft();
         const auto floatingBB = SDL_FRect{globalPos.x(), globalPos.y(), widthPerTile, heightPerTile};
@@ -34,6 +35,7 @@ namespace Tetris {
     }
 
     // Render discrete bb with fill color
+    // @deprecated
     void Tile::DrawDiscretePosition(SDL_Renderer *renderer) const {
         // Render discrete BB
         SDL_FRect bb = BB();
@@ -43,8 +45,5 @@ namespace Tetris {
         SDL_RenderFillRect(renderer, &bb);
     }
 
-    void Tile::Draw(SDL_Renderer *renderer) {
-        DrawRealPosition(renderer);
-        DrawDiscretePosition(renderer);
-    }
+    void Tile::Draw() { }
 } // Tetris

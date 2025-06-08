@@ -13,6 +13,7 @@
 #include "GameObject.h"
 #include "Renderer.h"
 #include "Shape.h"
+#include "StringRenderer.h"
 #include "TickTimer.h"
 
 struct Collision {
@@ -47,11 +48,16 @@ namespace Tetris {
         std::vector<std::shared_ptr<Tile> > m_tiles;
         std::unique_ptr<Shape> m_activeShape;
         std::vector<Collision> m_collisions;
+        // Used for timeout between shape spawns
         std::unique_ptr<TickTimer> m_tickTimer;
 
         // Board setup
         std::vector<ShapeConfiguration> m_shapeConfigurations;
         std::vector<SDL_FRect> m_boardBBs;
+
+        // UI
+        StringRenderer m_gameOverString;
+        StringRenderer m_scoreString;
 
         // Rendering
         GLuint m_shader{}, m_ebo{}, m_vao{}, m_vbo{};
@@ -77,20 +83,22 @@ namespace Tetris {
         void AttemptRotation(const float &rotation) const;
 
         void DrawGrid() const;
+
         void DrawTiles() const;
-        void DrawScore(SDL_Renderer *renderer) const;
+
+        void DrawScore();
+
+        void SetupRendering();
 
     public:
         Board();
         ~Board();
 
-        void SetupRendering();
-
         void HandleKeyDown(const SDL_KeyboardEvent &);
 
         void HandleKeyUp(const SDL_KeyboardEvent &);
 
-        void Draw(SDL_Renderer *renderer) override;
+        void Draw() override;
 
         void Tick(float dt) override;
     };

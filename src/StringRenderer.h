@@ -10,6 +10,7 @@
 
 #include "FontAsset.h"
 #include "Shader.h"
+#include "glm/glm.hpp"
 
 
 class StringRenderer {
@@ -25,7 +26,16 @@ public:
 
     std::array<float, 16> proj{};
 
+    void SetPosition(glm::vec2 pos);
+
+    void UpdateTransform();
+
 private:
+    // Transform
+    glm::mat4 m_transform;
+    glm::vec2 m_position{};
+
+    // Rendering
     FontAsset m_font{};
     Shader m_shader;
     GLuint m_vao{}, m_vbo{}, m_ebo{};

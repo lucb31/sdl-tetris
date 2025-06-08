@@ -10,7 +10,8 @@ class GameObject {
 public:
     virtual ~GameObject() = default;
 
-    virtual void Draw(SDL_Renderer *) = 0;
+    virtual void Draw() = 0;
+
     virtual void Tick(float dt) = 0;
 };
 #endif //GAMEOBJECT_H

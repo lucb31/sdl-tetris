@@ -29,7 +29,7 @@ public:
     Tile(float x, float y) : position(x, y) {};
     explicit Tile(const Math::Vec2 &pos) : position(pos) {};
 
-    void Draw(SDL_Renderer *) override;
+    void Draw() override;
 
     // Nothing to do in tick function. Movement & behavior is handled in parent
     void Tick(float dt) override {}

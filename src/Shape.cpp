@@ -31,7 +31,7 @@ namespace Tetris {
         m_rotation += radians;
     }
 
-    void Shape::Draw(SDL_Renderer *renderer) {
+    void Shape::Draw() {
         // Draw tiles
         std::vector<SDL_FRect> tiles;
         tiles.reserve(m_tiles.size());
@@ -39,15 +39,14 @@ namespace Tetris {
             tiles.emplace_back(tile->BB());
         }
         Renderer::DrawSDLRects(tiles.data(), tiles.size());
-        return;
 
         // Draw shape center
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        SDL_RenderDebugText(renderer, m_position.x(), m_position.y(), "X");
+        //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        //SDL_RenderDebugText(renderer, m_position.x(), m_position.y(), "X");
 
         // Debug display shape position
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        SDL_RenderDebugTextFormat(renderer, boardSizeX + 50, 100, "Position: (%.1f, %.1f)", m_position.x(), m_position.y());
+        //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        //SDL_RenderDebugTextFormat(renderer, boardSizeX + 50, 100, "Position: (%.1f, %.1f)", m_position.x(), m_position.y());
     }
 
     void Shape::Tick(const float dt) {
