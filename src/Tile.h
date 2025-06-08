@@ -5,31 +5,27 @@
 #ifndef TILE_H
 #define TILE_H
 #include "GameObject.h"
-#include "Mat3.h"
-#include "Vec2.h"
+#include "glm/glm.hpp"
 #include "SDL3/SDL_rect.h"
 
 namespace Tetris {
 
 class Tile : public GameObject {
+    glm::vec3 GetGlobalTopLeft() const;
 
-    Math::Vec3 GetGlobalTopLeft() const;
-
-    void DrawRealPosition(SDL_Renderer *renderer) const;
-
-    void DrawDiscretePosition(SDL_Renderer *renderer) const;
 public:
     // Relative position towards parent
-    Math::Vec2 position;
-    Math::Mat3 parentTransform{1,0,0, 0,1,0, 0,0,1};
+    glm::vec2 position{0.0f};
+    glm::mat4 parentTransform{1.0f};
 
     SDL_FRect BB() const;
 
-    Tile() : Tile(0, 0) {};
-    Tile(float x, float y) : position(x, y) {};
-    explicit Tile(const Math::Vec2 &pos) : position(pos) {};
+    Tile() : Tile(0.0f, 0.0f) {};
+    Tile(float x, float y) : Tile(glm::vec2(x, y)) {};
+    explicit Tile(const glm::vec2 &pos) : position(pos), parentTransform(glm::mat4(1.0f)) {};
 
-    void Draw() override;
+    // Nothing to do in draw function. Rendered in one draw call within shape
+    void Draw() override {};
 
     // Nothing to do in tick function. Movement & behavior is handled in parent
     void Tick(float dt) override {}

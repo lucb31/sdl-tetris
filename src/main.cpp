@@ -2,7 +2,6 @@
 #include <SDL3/SDL.h>
 
 #include "Board.h"
-#include "Mat3.h"
 #include "Renderer.h"
 #include "Benchmark/Instrumentor.h"
 
@@ -17,25 +16,6 @@ int main() {
         return 1;
     };
     SDL_Log("Init successful");
-
-    // Column major order
-    // Test cases for matrix x matrix multiplication
-    Math::Mat3 a{1, 9, 6, 8, 4, 2, 3, 5, 7};
-    Math::Mat3 b{6, 1, 5, 7, 3, 9, 4, 2, 8};
-    Math::Mat3 c = a * b;
-    Math::Mat3 expectedC{29, 83, 73, 58, 120, 111, 44, 84, 84};
-    if (!std::equal(std::begin(c.e), std::end(c.e), std::begin(expectedC.e))) {
-        SDL_Log("Mat3 mismatch");
-    }
-
-    // Test cases for matrix x vector multiplication
-    Math::Mat3 m{1, 4, 7, 2, 5, 8, 3, 6, 9};
-    Math::Vec3 v{2, 1, 3};
-    Math::Vec3 res = m * v;
-    Math::Vec3 expectedRes{13, 31, 49};
-    if (!std::equal(std::begin(res.e), std::end(res.e), std::begin(expectedRes.e))) {
-        SDL_Log("Vec3 testcase failed");
-    }
 
     // Initialize game
     Tetris::Board board;

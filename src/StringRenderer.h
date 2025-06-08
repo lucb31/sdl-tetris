@@ -32,8 +32,8 @@ public:
 
 private:
     // Transform
-    glm::mat4 m_transform;
-    glm::vec2 m_position{};
+    glm::mat4 m_transform{1.0f};
+    glm::vec2 m_position{0.0f};
 
     // Rendering
     FontAsset m_font{};

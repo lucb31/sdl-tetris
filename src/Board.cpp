@@ -21,13 +21,13 @@ namespace Tetris {
             const int rowMinY = rowIndex * heightPerTile;
             const int rowMaxY = (rowIndex + 1) * heightPerTile;
             for (const auto &tile: m_tiles) {
-                if (tile->position.y() > rowMaxY) {
+                if (tile->position.y > rowMaxY) {
                     // If below row -> Survives
                     survivors.push_back(tile);
                     SDL_Log("Tile below cleared row");
-                } else if (tile->position.y() < rowMinY) {
+                } else if (tile->position.y < rowMinY) {
                     // If above row -> Survive & Move
-                    tile->position += Math::Vec2(0, heightPerTile);
+                    tile->position += glm::vec2(0, heightPerTile);
                     survivors.push_back(tile);
                     SDL_Log("Tile above cleared row");
                 } else {
@@ -124,42 +124,42 @@ namespace Tetris {
         PROFILE_FUNCTION();
         for (const auto &collision: m_collisions) {
             // Check position of intersection relative to position
-            Math::Vec2 collisionDirection;
+            glm::vec2 collisionDirection(0.0f);
             if (collision.intersection.w >= 2.0f) {
                 // Vertical collision
                 if (collision.a.y >= collision.intersection.y) {
                     // Collision on the top side of the shape
-                    collisionDirection.e[1] = -1;
+                    collisionDirection.y = -1;
                 } else {
                     // Collision on the bottom side of the shape
-                    collisionDirection.e[1] = 1;
+                    collisionDirection.y = 1;
                 }
             }
             if (collision.intersection.h >= 2.0f) {
                 // Horizontal collision
                 if (collision.a.x >= collision.intersection.x) {
                     // Collision on the left side
-                    collisionDirection.e[0] = -1;
+                    collisionDirection.x = -1;
                 } else {
                     // Collision on the right side
-                    collisionDirection.e[0] = 1;
+                    collisionDirection.x = 1;
                 }
             }
 
-            if (collisionDirection.y() != 0) {
+            if (collisionDirection.y != 0) {
                 // Vertical collision
                 // Stop movement of active shape
                 m_activeShape->Freeze();
 
                 // Collision on top side of the shape -> Game over
-                if (collisionDirection.y() < 0) {
+                if (collisionDirection.y < 0) {
                     m_gameOver = true;
                 }
             }
-            if (collisionDirection.x() != 0) {
+            if (collisionDirection.x != 0) {
                 // Horizontal collision -> Restrict input movement
-                m_leftPressed = m_leftPressed && collisionDirection.x() > 0;
-                m_rightPressed = m_rightPressed && collisionDirection.x() < 0;
+                m_leftPressed = m_leftPressed && collisionDirection.x > 0;
+                m_rightPressed = m_rightPressed && collisionDirection.x < 0;
             }
         }
     }
@@ -363,15 +363,14 @@ namespace Tetris {
                 // Active shape has hit the ground
                 // Move tiles
                 const auto tiles = m_activeShape->GetTiles();
-                const Math::Mat3 shapeTransform = m_activeShape->GetTransform();
+                const glm::mat4 shapeTransform = m_activeShape->GetTransform();
                 m_tiles.reserve(m_tiles.size() + 4);
                 for (const auto &tile: tiles) {
                     // Transform tile position to global pos
-                    const Math::Vec3 globalPos = shapeTransform * Math::Vec3(tile->position.x(), tile->position.y(), 1);
-                    m_tiles.emplace_back(std::make_shared<Tile>(globalPos.x(), globalPos.y()));
+                    const glm::vec4 globalPos = shapeTransform * glm::vec4(tile->position.x, tile->position.y, 1, 1);
+                    m_tiles.emplace_back(std::make_shared<Tile>(globalPos.x, globalPos.y));
                 }
                 m_activeShape.reset();
-                // NOTE: Check if we have a memory leak here
 
                 CheckForClearedLines();
 
@@ -379,19 +378,18 @@ namespace Tetris {
                 m_tickTimer = std::make_unique<TickTimer>(1.0f, [this](int) {
                     AddRandomShape();
                 });
-                m_activeShape = nullptr;
             } else {
                 // Apply active shape movement inputs
-                auto inputVelocity = Math::Vec2();
+                auto inputVelocity = glm::vec2(0.0f);
                 if (m_leftPressed)
-                    inputVelocity += Math::Vec2(-1, 0);
+                    inputVelocity += glm::vec2(-1, 0);
                 if (m_rightPressed)
-                    inputVelocity += Math::Vec2(1, 0);
+                    inputVelocity += glm::vec2(1, 0);
                 if (m_downPressed)
-                    inputVelocity += Math::Vec2(0, 1);
+                    inputVelocity += glm::vec2(0, 1);
                 // Up just for debugging purposes
                 //if (m_upPressed)
-                //    inputVelocity += Math::Vec2(0, -1);
+                //    inputVelocity += glm::vec2(0, -1);
                 m_activeShape->AddInputVelocity(inputVelocity);
             }
         }

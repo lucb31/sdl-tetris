@@ -4,27 +4,31 @@
 
 #include "Shape.h"
 
-#include <cmath>
+#include <glm/glm.hpp>
 
-#include "Constants.h"
 #include "Renderer.h"
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
 
 namespace Tetris {
     void Shape::CalculateVelocity() {
-        m_velocity = m_inputVelocity + Math::Vec2(0, m_gravity);
+        m_velocity = m_inputVelocity + GRAVITY_VECTOR;
     }
 
     void Shape::Freeze() {
-        m_velocity = Math::Vec2();
+        m_velocity = glm::vec2(0.0f);
         m_grounded = true;
     }
 
-    void Shape::AddInputVelocity(const Math::Vec2 &direction) {
+    void Shape::AddInputVelocity(const glm::vec2 &direction) {
         if (m_grounded) {
             return;
         }
-        Math::Vec2 normalizedDirection = direction.Norm();
-        m_inputVelocity = normalizedDirection * m_speed;
+        if (glm::length(direction) > 0.005f) {
+            m_inputVelocity = glm::normalize(direction) * m_speed;
+        } else {
+            m_inputVelocity = glm::vec2(0.0f);
+        }
     }
 
     void Shape::Rotate(float radians) {
@@ -42,11 +46,11 @@ namespace Tetris {
 
         // Draw shape center
         //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        //SDL_RenderDebugText(renderer, m_position.x(), m_position.y(), "X");
+        //SDL_RenderDebugText(renderer, m_position.x, m_position.y, "X");
 
         // Debug display shape position
         //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        //SDL_RenderDebugTextFormat(renderer, boardSizeX + 50, 100, "Position: (%.1f, %.1f)", m_position.x(), m_position.y());
+        //SDL_RenderDebugTextFormat(renderer, boardSizeX + 50, 100, "Position: (%.1f, %.1f)", m_position.x, m_position.y);
     }
 
     void Shape::Tick(const float dt) {
@@ -57,7 +61,7 @@ namespace Tetris {
         CalculateVelocity();
         m_position += m_velocity * dt;
 
-        const Math::Mat3 transform = GetTransform();
+        const glm::mat4 transform = GetTransform();
         for (const auto &tile: m_tiles) {
             // Pointer solution would be more elegant
             tile->parentTransform = transform;
@@ -75,24 +79,15 @@ namespace Tetris {
         return collisionBBs;
     }
 
-    Math::Mat3 Shape::GetTransform() const {
-        // Column-major order
-        const Math::Mat3 translationMat = Math::Mat3(
-            1, 0, 0,
-            0, 1, 0,
-            m_position.x(), m_position.y(), 1
-        );
-
-        // Rotation
-        const Math::Mat3 rotationMat = Math::Mat3(
-            std::cos(m_rotation), std::sin(m_rotation), 0,
-            -std::sin(m_rotation), std::cos(m_rotation), 0,
-            0, 0, 1
-        );
-        return translationMat * rotationMat;
+    glm::mat4 Shape::GetTransform() const {
+        const glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(m_position.x, m_position.y, 0.0f));
+        const glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), m_rotation, glm::vec3(0.0f, 0.0f, 1.0f));
+        return translate * rotate;
     }
 
-    Shape::Shape(const float x, const float y, const std::vector<Math::Vec2>& tilePositions) : m_position(Math::Vec2(x, y)), m_velocity(Math::Vec2(0, 0)) {
+    Shape::Shape(const float x, const float y,
+                 const std::vector<glm::vec2> &tilePositions) : m_position(glm::vec2(x, y)),
+                                                                m_velocity(glm::vec2(0.0f)) {
         // Initialize tiles
         m_tiles.reserve(tilePositions.size());
         const auto t = GetTransform();

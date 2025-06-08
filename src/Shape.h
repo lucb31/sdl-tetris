@@ -8,40 +8,40 @@
 #include <vector>
 
 #include "GameObject.h"
-#include "Vec2.h"
-#include "Mat3.h"
 #include "Tile.h"
 
 namespace Tetris {
+    constexpr glm::vec2 GRAVITY_VECTOR = glm::vec2(0.0f, 150.0f);
+
     class Shape : public GameObject {
-        // Constant vertical velocity component applied to velocity calculation
-        float m_gravity = 150;
         // Controls how 'maneuverable' the shape is
-        float m_speed = 150;
-        bool m_grounded = false;
+        float m_speed{150};
+        bool m_grounded{false};
 
         // Tiles need to be shared ptrs since they're going to get
         // passed to the board once shape is placed
         std::vector<std::shared_ptr<Tile> > m_tiles;
-        Math::Vec2 m_position;
-        float m_rotation = 0.0f;
-        // Actual velocity
-        Math::Vec2 m_velocity;
+        // Current position
+        glm::vec2 m_position{0.0f};
+        // Current rotation in RAD
+        float m_rotation{0.0f};
+        // Current velocity
+        glm::vec2 m_velocity{0.0f};
         // Requested velocity by user input
-        Math::Vec2 m_inputVelocity;
+        glm::vec2 m_inputVelocity{0.0f};
 
         void CalculateVelocity();
 
     public:
-        Shape(float x, float y, const std::vector<Math::Vec2> &tilePositions);
+        Shape(float x, float y, const std::vector<glm::vec2> &tilePositions);
 
         bool IsGrounded() const { return m_grounded; }
 
-        std::vector<std::shared_ptr<Tile>> GetTiles() const { return m_tiles; }
+        std::vector<std::shared_ptr<Tile> > GetTiles() const { return m_tiles; }
 
         void Freeze();
 
-        void AddInputVelocity(const Math::Vec2 &direction);
+        void AddInputVelocity(const glm::vec2 &direction);
 
         void Rotate(float radians);
 
@@ -51,8 +51,7 @@ namespace Tetris {
 
         std::vector<SDL_FRect> GetCollisionBBs() const;
 
-        Math::Mat3 GetTransform() const;
-
+        glm::mat4 GetTransform() const;
     };
 } // Tetris
 

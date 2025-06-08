@@ -9,8 +9,6 @@
 #include <GL/glew.h>
 #include <array>
 
-#include "Vec3.h"
-
 constexpr int kScreenWidth = 1024;
 constexpr int kScreenHeight = 768;
 
@@ -34,8 +32,6 @@ public:
     static void DrawSDLRects(const SDL_FRect *rects, int count, std::array<float, 4> color);
 
 private:
-    // TODO: Deprecate
-    SDL_Renderer *m_renderer{nullptr};
     SDL_GLContext m_glContext{nullptr};
     SDL_Window *m_window{nullptr};
 

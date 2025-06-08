@@ -6,15 +6,12 @@ add_executable(${PROJECT_NAME}
         Board.cpp
         Board.h
         GameObject.h
-        Vec2.h
         TickTimer.cpp
         TickTimer.h
         Keymap.h
         Constants.h
         Tile.cpp
         Tile.h
-        Mat3.h
-        Vec3.h
         Benchmark/Instrumentor.h
         Texture.cpp
         Texture.h

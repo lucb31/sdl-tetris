@@ -32,7 +32,7 @@ namespace Tetris {
     };
 
     struct ShapeConfiguration {
-        std::vector<Math::Vec2> tilePositions;
+        std::vector<glm::vec2> tilePositions;
 
         ShapeConfiguration() {
             tilePositions.reserve(4);

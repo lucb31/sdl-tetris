@@ -4,7 +4,6 @@
 
 #ifndef GAMEOBJECT_H
 #define GAMEOBJECT_H
-#include "SDL3/SDL_render.h"
 
 class GameObject {
 public:

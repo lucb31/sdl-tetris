@@ -4,46 +4,25 @@
 
 #include "Tile.h"
 
+#include "Board.h"
 #include "Constants.h"
+#include "glm/glm.hpp"
+#include "glm/ext/matrix_transform.hpp"
 
 namespace Tetris {
     SDL_FRect Tile::BB() const {
-        const Math::Vec3 globalPos = GetGlobalTopLeft();
-        const float discreteX = std::round(globalPos.x()  / widthPerTile) * widthPerTile;
-        const float discreteY = std::round(globalPos.y()  / heightPerTile) * heightPerTile;
+        const glm::vec3 globalPos = GetGlobalTopLeft();
+        const float discreteX = std::round(globalPos.x / widthPerTile) * widthPerTile;
+        const float discreteY = std::round(globalPos.y / heightPerTile) * heightPerTile;
         return SDL_FRect{discreteX, discreteY, widthPerTile, heightPerTile};
     }
 
-    Math::Vec3 Tile::GetGlobalTopLeft() const {
+    glm::vec3 Tile::GetGlobalTopLeft() const {
         // Apply parent transform to local position to retrieve global center position
-        Math::Vec3 globalPos = parentTransform * Math::Vec3(position.x(), position.y(), 1);
+        const glm::vec4 globalPos = parentTransform * glm::vec4(position.x, position.y, 1, 1);
         // Offset from center position to top left
-        Math::Mat3 localTransform = Math::Mat3(
-            1, 0, 0,
-            0, 1, 0,
-            -widthPerTile / 2, -heightPerTile / 2, 1);
+        constexpr glm::mat4 localTransform = glm::translate(glm::mat4(1.0f),
+                                                            glm::vec3(-widthPerTile / 2.0f, -heightPerTile / 2.0f, 0));
         return localTransform * globalPos;
     }
-
-    // Render floating point bb as outline
-    // @deprecated
-    void Tile::DrawRealPosition(SDL_Renderer *renderer) const {
-        const Math::Vec3 globalPos = GetGlobalTopLeft();
-        const auto floatingBB = SDL_FRect{globalPos.x(), globalPos.y(), widthPerTile, heightPerTile};
-        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-        SDL_RenderRect(renderer, &floatingBB);
-    }
-
-    // Render discrete bb with fill color
-    // @deprecated
-    void Tile::DrawDiscretePosition(SDL_Renderer *renderer) const {
-        // Render discrete BB
-        SDL_FRect bb = BB();
-        // TODO: Enums for colors
-        // Fill
-        SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
-        SDL_RenderFillRect(renderer, &bb);
-    }
-
-    void Tile::Draw() { }
 } // Tetris
