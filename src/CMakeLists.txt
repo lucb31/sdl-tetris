@@ -1,17 +1,17 @@
 add_executable(${PROJECT_NAME}
         Renderer.h
         Renderer.cpp
-        Shape.cpp
-        Shape.h
-        Board.cpp
-        Board.h
+        Tetris/Shape.cpp
+        Tetris/Shape.h
+        Tetris/Board.cpp
+        Tetris/Board.h
         GameObject.h
         TickTimer.cpp
         TickTimer.h
-        Keymap.h
-        Constants.h
-        Tile.cpp
-        Tile.h
+        Tetris/Keymap.h
+        Tetris/Constants.h
+        Tetris/Tile.cpp
+        Tetris/Tile.h
         Benchmark/Instrumentor.h
         Texture.cpp
         Texture.h
@@ -23,7 +23,7 @@ add_executable(${PROJECT_NAME}
         FontAsset.cpp
         FontAsset.h
         Collision.h
-        ShapeConfiguration.h
+        Tetris/ShapeConfiguration.h
 )
 target_sources(${PROJECT_NAME} PRIVATE main.cpp)
 

@@ -1,7 +1,7 @@
 #include <oneapi/tbb/profiling.h>
 #include <SDL3/SDL.h>
 
-#include "Board.h"
+#include "Tetris/Board.h"
 #include "Renderer.h"
 #include "Benchmark/Instrumentor.h"
 

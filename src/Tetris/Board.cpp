@@ -6,7 +6,7 @@
 
 #include "Keymap.h"
 #include "Constants.h"
-#include "Benchmark/Instrumentor.h"
+#include "../Benchmark/Instrumentor.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.inl"

@@ -7,8 +7,8 @@
 #include <memory>
 #include <vector>
 
-#include "Collision.h"
-#include "GameObject.h"
+#include "../Collision.h"
+#include "../GameObject.h"
 #include "ShapeConfiguration.h"
 #include "Tile.h"
 

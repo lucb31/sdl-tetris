@@ -10,12 +10,12 @@
 
 #include "SDL3/SDL_events.h"
 
-#include "GameObject.h"
-#include "Renderer.h"
+#include "../GameObject.h"
+#include "../Renderer.h"
 #include "Shape.h"
 #include "ShapeConfiguration.h"
-#include "StringRenderer.h"
-#include "TickTimer.h"
+#include "../StringRenderer.h"
+#include "../TickTimer.h"
 
 namespace Tetris {
     class Board : public GameObject {

@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 
 #include "Constants.h"
-#include "Renderer.h"
+#include "../Renderer.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 
