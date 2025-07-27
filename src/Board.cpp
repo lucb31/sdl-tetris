@@ -7,6 +7,9 @@
 #include "Keymap.h"
 #include "Constants.h"
 #include "Benchmark/Instrumentor.h"
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.inl"
 #include "SDL3/SDL_log.h"
 
 namespace Tetris {
@@ -18,14 +21,16 @@ namespace Tetris {
             survivors.reserve(m_tiles.size() - tileCols);
 
             // Bounds for the current row
-            const int rowMinY = rowIndex * heightPerTile;
-            const int rowMaxY = (rowIndex + 1) * heightPerTile;
+            const float rowMinY = m_position.y + rowIndex * heightPerTile;
+            const float rowMaxY = m_position.y + (rowIndex + 1) * heightPerTile;
             for (const auto &tile: m_tiles) {
-                if (tile->position.y > rowMaxY) {
+                // Use bb here to get GLOBAL position of tile, not local
+                const auto tileBB = tile->BB();
+                if (tileBB.y > rowMaxY) {
                     // If below row -> Survives
                     survivors.push_back(tile);
-                } else if (tile->position.y < rowMinY) {
-                    // If above row -> Survive & Move
+                } else if (tileBB.y < rowMinY) {
+                    // If above row -> Survive & Move down one row
                     tile->position += glm::vec2(0, heightPerTile);
                     survivors.push_back(tile);
                 } else {
@@ -52,7 +57,7 @@ namespace Tetris {
         std::vector<int> rowsToClear;
         for (int row = 0; row < tileRows; ++row) {
             int hits = 0;
-            const auto scanlineBB = SDL_FRect(0, row * heightPerTile, boardSizeX, heightPerTile);
+            const auto scanlineBB = SDL_FRect(m_position.x, m_position.y + row * heightPerTile, boardSizeX, heightPerTile);
             for (const auto &tileBB: tileBBs) {
                 SDL_FRect intersection{};
                 if (SDL_GetRectIntersectionFloat(&tileBB, &scanlineBB, &intersection)) {
@@ -73,18 +78,30 @@ namespace Tetris {
         }
     }
 
-    std::vector<SDL_FRect> Board::GetBoardBoundingBoxes() {
+    std::vector<SDL_FRect> Board::GetBoardBoundingBoxes() const {
         std::vector<SDL_FRect> bbs;
         bbs.reserve(4);
         // Floor
-        bbs.emplace_back(-100, boardSizeY, boardSizeX + 200.0f, 100.0f);
+        bbs.emplace_back(m_position.x - 10.0f, m_position.y + boardSizeY, boardSizeX + 20.0f, 10.0f);
         // Ceiling
-        bbs.emplace_back(-100.0f, -100.0f, boardSizeX + 200.0f, 99);
+        bbs.emplace_back(m_position.x - 10.0f, m_position.y - 10.0f, boardSizeX + 20.0f, 10.0f);
         // Left side
-        bbs.emplace_back(-100.0f, -100.0f, 100, boardSizeY + 200.0f);
+        bbs.emplace_back(m_position.x - 10.0f, m_position.y - 10.0f, 10.0f, boardSizeY + 20.0f);
         // Right side
-        bbs.emplace_back(boardSizeX, -100.0f, 100.0f, boardSizeY + 200.0f);
+        bbs.emplace_back(m_position.x + boardSizeX, m_position.y - 10.0f, 10.0f, boardSizeY + 20.0f);
         return bbs;
+    }
+
+    void Board::SetupProjection() {
+        // Initialize board position
+        constexpr float boardOffsetX = (float) (kScreenWidth - tileCols * widthPerTile) / 2.0f;
+        constexpr float boardOffsetY = (float) (kScreenHeight - tileRows * heightPerTile) / 2.0f;
+        m_position = glm::vec2(boardOffsetX, boardOffsetY);
+        const auto boardTranslation = glm::translate(glm::mat4(1), glm::vec3(m_position, 0.0f));
+
+        // Initialize projection & mvp
+        m_projection = glm::ortho(0.0f, (float) kScreenWidth, (float) kScreenHeight, 0.0f);
+        m_mvp = m_projection * boardTranslation;
     }
 
     Board::Board() {
@@ -113,10 +130,7 @@ namespace Tetris {
         m_shapeConfigurations.push_back(tConfig);
 
         SetupRendering();
-
-        // Initialize Board bounding boxes
-        m_boardBBs = GetBoardBoundingBoxes();
-        AddRandomShape();
+        SetupProjection();
 
         // Initialize UI strings
         m_gameOverString = StringRenderer();
@@ -125,6 +139,10 @@ namespace Tetris {
         m_scoreString = StringRenderer();
         m_scoreString.SetPosition(glm::vec2(boardSizeX + 50, 50));
         m_scoreString.SetString("Score: 0");
+
+        // Initialize Board bounding boxes
+        m_boardBBs = GetBoardBoundingBoxes();
+        AddRandomShape();
     }
 
     Board::~Board() {
@@ -168,7 +186,7 @@ namespace Tetris {
 
     void Board::AddRandomShape() {
         // Check if there's still space available. If any tile collides with the top row -> Game Over
-        constexpr SDL_FRect ceilingBB = SDL_FRect(0.0f, 0.0f, boardSizeX, heightPerTile);
+        const SDL_FRect ceilingBB = SDL_FRect(m_position.x, m_position.y, boardSizeX, heightPerTile);
         for (const auto &tile: m_tiles) {
             const auto tileBB = tile->BB();
             SDL_FRect intersection{};
@@ -198,9 +216,10 @@ namespace Tetris {
         }
 
         // + 0.5 to offset by half width; avoids rounding errors when moving by 1 tile width
-        const float startX = (tileCols / 2.0f + 0.5f) * widthPerTile;
-        const float startY = heightPerTile * 2;
-        m_activeShape = std::make_unique<Shape>(startX, startY, shape.tilePositions, bbs);
+        const float offsetX = boardSizeX / 2.0f;
+        const float offsetY = heightPerTile * 2;
+        const auto shapeSpawnPos = m_position + glm::vec2(offsetX, offsetY);
+        m_activeShape = std::make_unique<Shape>(shapeSpawnPos, shape.tilePositions, bbs);
     }
 
 
@@ -244,7 +263,6 @@ namespace Tetris {
         // Draw game over message
         if (m_gameOver) {
             m_gameOverString.Render();
-            return;
         }
         if (m_activeShape != nullptr) {
             m_activeShape->Draw();
@@ -272,7 +290,7 @@ namespace Tetris {
         Renderer::CheckGLError("glUseProgram");
         // Bind mvp uniform
         const auto mvpLocation = glGetUniformLocation(m_shader, "mvp");
-        glUniformMatrix4fv(mvpLocation, 1, false, boardMvp);
+        glUniformMatrix4fv(mvpLocation, 1, false, glm::value_ptr(m_mvp));
         Renderer::CheckGLError("glUniformMatrix4fv");
         // Bind vertex attributes
         glBindVertexArray(m_vao);

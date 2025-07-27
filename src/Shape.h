@@ -42,6 +42,10 @@ namespace Tetris {
     public:
         Shape(float x, float y, const std::vector<glm::vec2> &tilePositions, const std::vector<SDL_FRect> &outsideBBs);
 
+        Shape(const glm::vec2 &pos, const std::vector<glm::vec2> &tilePositions,
+              const std::vector<SDL_FRect> &outsideBBs) : Shape(pos.x, pos.y, tilePositions, outsideBBs) {
+        };
+
         bool IsGrounded() const { return m_grounded; }
 
         std::vector<std::shared_ptr<Tile> > GetTiles() const { return m_tiles; }

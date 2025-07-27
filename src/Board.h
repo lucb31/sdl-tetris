@@ -17,14 +17,6 @@
 #include "TickTimer.h"
 
 namespace Tetris {
-    // Rendering constants
-    constexpr float boardMvp[] = {
-        2.0f / kScreenWidth, 0, 0, 0,
-        0, -2.0f / kScreenHeight, 0, 0,
-        0, 0, 1, 0,
-        -1, 1, 0, 1,
-    };
-
     struct ShapeConfiguration {
         std::vector<glm::vec2> tilePositions;
 
@@ -54,6 +46,9 @@ namespace Tetris {
 
         // Rendering
         GLuint m_shader{}, m_ebo{}, m_vao{}, m_vbo{};
+        glm::vec2 m_position;
+        glm::mat4 m_projection;
+        glm::mat4 m_mvp;
 
         // Keyboard control
         bool m_leftPressed{false};
@@ -68,11 +63,11 @@ namespace Tetris {
 
         void CheckForClearedLines();
 
-        static std::vector<SDL_FRect> GetBoardBoundingBoxes();
+        std::vector<SDL_FRect> GetBoardBoundingBoxes() const;
+
+        void SetupProjection();
 
         void AddRandomShape();
-
-        void AttemptRotation(const float &rotation) const;
 
         void DrawGrid() const;
 
