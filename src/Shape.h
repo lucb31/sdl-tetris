@@ -9,6 +9,7 @@
 
 #include "Collision.h"
 #include "GameObject.h"
+#include "ShapeConfiguration.h"
 #include "Tile.h"
 
 namespace Tetris {
@@ -35,6 +36,8 @@ namespace Tetris {
         // Will be initialized with shape
         std::vector<SDL_FRect> m_outsideBBs;
 
+        glm::vec4 m_color{1.0f};
+
         void CalculateVelocity();
 
         std::vector<Collision> CalculateCollisions() const;
@@ -42,8 +45,13 @@ namespace Tetris {
     public:
         Shape(float x, float y, const std::vector<glm::vec2> &tilePositions, const std::vector<SDL_FRect> &outsideBBs);
 
-        Shape(const glm::vec2 &pos, const std::vector<glm::vec2> &tilePositions,
-              const std::vector<SDL_FRect> &outsideBBs) : Shape(pos.x, pos.y, tilePositions, outsideBBs) {
+        Shape(float x, float y, const ShapeConfiguration &config, const std::vector<SDL_FRect> &outsideBBs) : Shape(
+            x, y, config.tilePositions, outsideBBs) {
+            m_color = config.color;
+        };
+
+        Shape(const glm::vec2 &pos, const ShapeConfiguration &config,
+              const std::vector<SDL_FRect> &outsideBBs) : Shape(pos.x, pos.y, config, outsideBBs) {
         };
 
         bool IsGrounded() const { return m_grounded; }

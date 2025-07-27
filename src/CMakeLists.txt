@@ -23,6 +23,7 @@ add_executable(${PROJECT_NAME}
         FontAsset.cpp
         FontAsset.h
         Collision.h
+        ShapeConfiguration.h
 )
 target_sources(${PROJECT_NAME} PRIVATE main.cpp)
 

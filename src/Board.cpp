@@ -113,6 +113,7 @@ namespace Tetris {
         iConfig.tilePositions.emplace_back(0, -16);
         iConfig.tilePositions.emplace_back(0, 16);
         iConfig.tilePositions.emplace_back(0, 48);
+        iConfig.color = glm::vec4(0, 1, 0, 1);
         m_shapeConfigurations.push_back(iConfig);
         // L
         ShapeConfiguration config;
@@ -120,6 +121,7 @@ namespace Tetris {
         config.tilePositions.emplace_back(0, -16);
         config.tilePositions.emplace_back(0, 16);
         config.tilePositions.emplace_back(-32, 16);
+        config.color = glm::vec4(1, 0, 0, 1);
         m_shapeConfigurations.push_back(config);
         // T
         ShapeConfiguration tConfig;
@@ -127,6 +129,7 @@ namespace Tetris {
         tConfig.tilePositions.emplace_back(0, 16);
         tConfig.tilePositions.emplace_back(-32, 16);
         tConfig.tilePositions.emplace_back(32, 16);
+        tConfig.color = glm::vec4(0, 0, 1, 1);
         m_shapeConfigurations.push_back(tConfig);
 
         SetupRendering();
@@ -219,7 +222,7 @@ namespace Tetris {
         const float offsetX = boardSizeX / 2.0f;
         const float offsetY = heightPerTile * 2;
         const auto shapeSpawnPos = m_position + glm::vec2(offsetX, offsetY);
-        m_activeShape = std::make_unique<Shape>(shapeSpawnPos, shape.tilePositions, bbs);
+        m_activeShape = std::make_unique<Shape>(shapeSpawnPos, shape, bbs);
     }
 
 

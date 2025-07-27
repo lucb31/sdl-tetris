@@ -13,18 +13,11 @@
 #include "GameObject.h"
 #include "Renderer.h"
 #include "Shape.h"
+#include "ShapeConfiguration.h"
 #include "StringRenderer.h"
 #include "TickTimer.h"
 
 namespace Tetris {
-    struct ShapeConfiguration {
-        std::vector<glm::vec2> tilePositions;
-
-        ShapeConfiguration() {
-            tilePositions.reserve(4);
-        }
-    };
-
     class Board : public GameObject {
     private:
         // Game state

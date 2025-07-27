@@ -43,7 +43,8 @@ namespace Tetris {
         for (const auto &tile: m_tiles) {
             tiles.emplace_back(tile->BB());
         }
-        Renderer::DrawSDLRects(tiles.data(), tiles.size());
+        Renderer::DrawSDLRects(tiles.data(), tiles.size(),
+                               std::array<float, 4>{m_color.x, m_color.y, m_color.z, m_color.w});
 
         // Draw shape center
         //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -116,14 +117,14 @@ namespace Tetris {
             const auto area = collision.intersection.w * collision.intersection.h;
             // Touching collision
             if (area < 0.1f) {
-                SDL_Log("Touching collision: Ignoring.");
+                // SDL_Log("Touching collision: Ignoring.");
             } else {
                 SDL_Log("Intrusion collision detected.");
                 // Default initialize normal in negative y direction -> Assuming a vertical collision
                 glm::vec2 collisionNormal = glm::vec2(0.0f, -1.0f);
                 if (glm::abs(m_velocity.x) > 0.0f) {
                     SDL_Log("You had some horizontal velocity. Assuming this was a horizontal collision");
-                    collisionNormal = glm::vec2(glm::sign(m_velocity.x)*1.0f, 0.0f);
+                    collisionNormal = glm::vec2(glm::sign(m_velocity.x) * 1.0f, 0.0f);
                 } else {
                     // We had no horizontal velocity and still collided -> Must be a vertical collision
                     SDL_Log("Vertical collision detected. Freezing....");
