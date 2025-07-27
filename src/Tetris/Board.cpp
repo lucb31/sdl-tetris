@@ -214,7 +214,7 @@ namespace Tetris {
         const ShapeConfiguration shape = m_queue->Next();
 
         // + 0.5 to offset by half width; avoids rounding errors when moving by 1 tile width
-        constexpr float offsetX = boardSizeX / 2.0f;
+        constexpr float offsetX = boardSizeX / 2.0f + 10.0f;
         constexpr float offsetY = heightPerTile * 2;
         const auto shapeSpawnPos = m_position + glm::vec2(offsetX, offsetY);
         m_activeShape = std::make_unique<Shape>(shapeSpawnPos, shape, bbs);
