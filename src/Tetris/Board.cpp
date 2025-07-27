@@ -124,6 +124,8 @@ namespace Tetris {
         m_gameOverString.SetString("Game Over");
         m_scoreString = StringRenderer();
         m_scoreString.SetPosition(glm::vec2(m_position.x + boardSizeX + 50, m_position.y + 50));
+        m_highScoreString = StringRenderer();
+        m_highScoreString.SetPosition(glm::vec2(m_position.x + boardSizeX + 50, m_position.y + 100));
 
         // Initialize Board bounding boxes
         m_boardBBs = GetBoardBoundingBoxes();
@@ -143,6 +145,8 @@ namespace Tetris {
 
     void Board::UpdateScore() {
         m_scoreString.SetString(std::format("Score: {}", m_score));
+        m_highScore = std::max(m_score, m_highScore);
+        m_highScoreString.SetString(std::format("HighScore: {}", m_highScore));
     }
 
     Board::~Board() {
@@ -288,6 +292,7 @@ namespace Tetris {
 
     void Board::DrawScore() {
         m_scoreString.Render();
+        m_highScoreString.Render();
     }
 
     void Board::DrawGrid() const {

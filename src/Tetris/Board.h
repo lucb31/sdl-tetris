@@ -23,6 +23,7 @@ namespace Tetris {
         // Game state
         bool m_gameOver{false};
         int m_score{0};
+        int m_highScore{0};
         // Needs to be shared to avoid copies in line clear method
         std::vector<std::shared_ptr<Tile>> m_tiles;
         std::unique_ptr<Shape> m_activeShape;
@@ -35,6 +36,7 @@ namespace Tetris {
         // UI
         StringRenderer m_gameOverString;
         StringRenderer m_scoreString;
+        StringRenderer m_highScoreString;
 
         // Rendering
         GLuint m_shader{}, m_ebo{}, m_vao{}, m_vbo{};
