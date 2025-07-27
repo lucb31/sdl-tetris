@@ -11,11 +11,14 @@
 
 namespace Tetris {
     struct ShapeConfiguration {
+        // Used mainly for debugging purposes
+        std::string name;
         std::vector<glm::vec2> tilePositions;
         glm::vec4 color{};
 
         ShapeConfiguration() {
             tilePositions.reserve(4);
+            name = "Unnamed Shape";
         }
     };
 

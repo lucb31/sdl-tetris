@@ -14,6 +14,7 @@
 #include "../Renderer.h"
 #include "Shape.h"
 #include "ShapeConfiguration.h"
+#include "ShapeQueue.h"
 #include "../StringRenderer.h"
 #include "../TickTimer.h"
 
@@ -28,9 +29,8 @@ namespace Tetris {
         std::unique_ptr<Shape> m_activeShape;
         // Used for timeout between shape spawns
         std::unique_ptr<TickTimer> m_tickTimer;
+        std::unique_ptr<ShapeQueue> m_queue;
 
-        // Board setup
-        std::vector<ShapeConfiguration> m_shapeConfigurations;
         std::vector<SDL_FRect> m_boardBBs;
 
         // UI

@@ -24,6 +24,8 @@ add_executable(${PROJECT_NAME}
         FontAsset.h
         Collision.h
         Tetris/ShapeConfiguration.h
+        Tetris/ShapeQueue.cpp
+        Tetris/ShapeQueue.h
 )
 target_sources(${PROJECT_NAME} PRIVATE main.cpp)
 

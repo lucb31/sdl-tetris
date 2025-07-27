@@ -105,33 +105,6 @@ namespace Tetris {
     }
 
     Board::Board() {
-        // Initialize shape configurations
-        m_shapeConfigurations.reserve(3);
-        // I
-        ShapeConfiguration iConfig;
-        iConfig.tilePositions.emplace_back(0, -48);
-        iConfig.tilePositions.emplace_back(0, -16);
-        iConfig.tilePositions.emplace_back(0, 16);
-        iConfig.tilePositions.emplace_back(0, 48);
-        iConfig.color = glm::vec4(0, 1, 0, 1);
-        m_shapeConfigurations.push_back(iConfig);
-        // L
-        ShapeConfiguration config;
-        config.tilePositions.emplace_back(0, -48);
-        config.tilePositions.emplace_back(0, -16);
-        config.tilePositions.emplace_back(0, 16);
-        config.tilePositions.emplace_back(-32, 16);
-        config.color = glm::vec4(1, 0, 0, 1);
-        m_shapeConfigurations.push_back(config);
-        // T
-        ShapeConfiguration tConfig;
-        tConfig.tilePositions.emplace_back(0, -16);
-        tConfig.tilePositions.emplace_back(0, 16);
-        tConfig.tilePositions.emplace_back(-32, 16);
-        tConfig.tilePositions.emplace_back(32, 16);
-        tConfig.color = glm::vec4(0, 0, 1, 1);
-        m_shapeConfigurations.push_back(tConfig);
-
         SetupRendering();
         SetupProjection();
 
@@ -145,6 +118,7 @@ namespace Tetris {
 
         // Initialize Board bounding boxes
         m_boardBBs = GetBoardBoundingBoxes();
+        m_queue = std::make_unique<ShapeQueue>();
         AddRandomShape();
     }
 
@@ -204,10 +178,6 @@ namespace Tetris {
             return;
         }
 
-        // Pick random shape
-        const int shapeIdx = SDL_rand(m_shapeConfigurations.size());
-        const auto shape = m_shapeConfigurations[shapeIdx];
-
         // Need to pass all collision bbs to the shape so it can do collision checking
         // on its own. Ideally we would have a collision server managing this
         std::vector<SDL_FRect> bbs;
@@ -217,6 +187,9 @@ namespace Tetris {
             const SDL_FRect tileBB = tile->BB();
             bbs.push_back(tileBB);
         }
+
+        // Pop shape from queue and enqueue a new one
+        const ShapeConfiguration shape = m_queue->Next();
 
         // + 0.5 to offset by half width; avoids rounding errors when moving by 1 tile width
         const float offsetX = boardSizeX / 2.0f;
