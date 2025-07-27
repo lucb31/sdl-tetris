@@ -26,7 +26,7 @@ namespace Tetris {
             return;
         }
         if (glm::length(direction) > 0.005f) {
-            m_inputVelocity = glm::normalize(direction) * (float)widthPerTile / 0.016f;
+            m_inputVelocity = glm::normalize(direction) * (float) widthPerTile / 0.016f;
         } else {
             m_inputVelocity = glm::vec2(0.0f);
         }
@@ -59,9 +59,38 @@ namespace Tetris {
             // No need to re-calculate position, velocity, transform ...
             return;
         }
-        CalculateVelocity();
-        m_position += m_velocity * dt;
+        MoveAndSlide(dt);
+    }
 
+    void Shape::AttemptRotation(const float &rotation) {
+        // (Temporarily) rotate shape
+        Rotate(rotation);
+        UpdateTransform();
+        // Calculate collisions
+        std::vector<Collision> collisions = CalculateCollisions();
+
+        // Check for intersecting collisions
+        bool needToRevert = false;
+        if (!collisions.empty()) {
+            for (const Collision &collision: collisions) {
+                const float collisionArea = collision.intersection.h * collision.intersection.w;
+                if (collisionArea > 0.0f) {
+                    needToRevert = true;
+                    break;
+                }
+            }
+        }
+
+        // Revert rotation movement if required
+        if (needToRevert) {
+            // Rotate back if collided
+            SDL_Log("Detected intersecting collision after rotation. Reverting rotation.");
+            Rotate(-rotation);
+            UpdateTransform();
+        }
+    }
+
+    void Shape::UpdateTransform() const {
         const glm::mat4 transform = GetTransform();
         for (const auto &tile: m_tiles) {
             // Pointer solution would be more elegant
@@ -69,7 +98,60 @@ namespace Tetris {
         }
     }
 
-    // Shared ptr probably not required here. Can just copy
+    void Shape::MoveAndSlide(const float dt) {
+        CalculateVelocity();
+        const glm::vec<2, float> oldPosition = m_position;
+        m_position = m_position + m_velocity * dt;
+        UpdateTransform();
+
+        // Check collisions
+        const auto collisions = CalculateCollisions();
+        if (collisions.empty()) {
+            return;
+        }
+
+        // Handle collisions
+        auto realVelocity = m_velocity;
+        for (const auto &collision: collisions) {
+            const auto area = collision.intersection.w * collision.intersection.h;
+            // Touching collision
+            if (area < 0.1f) {
+                SDL_Log("Touching collision: Ignoring.");
+            } else {
+                SDL_Log("Intrusion collision detected.");
+                // Default initialize normal in negative y direction -> Assuming a vertical collision
+                glm::vec2 collisionNormal = glm::vec2(0.0f, -1.0f);
+                if (glm::abs(m_velocity.x) > 0.0f) {
+                    SDL_Log("You had some horizontal velocity. Assuming this was a horizontal collision");
+                    collisionNormal = glm::vec2(glm::sign(m_velocity.x)*1.0f, 0.0f);
+                } else {
+                    // We had no horizontal velocity and still collided -> Must be a vertical collision
+                    SDL_Log("Vertical collision detected. Freezing....");
+                    Freeze();
+                }
+                // Adjust real velocity to restrict any movement in direction of collision normal
+                realVelocity = realVelocity - collisionNormal * glm::dot(realVelocity, collisionNormal);
+            }
+        }
+        // Correct position
+        m_position = oldPosition + realVelocity * dt;
+        UpdateTransform();
+    }
+
+    std::vector<Collision> Shape::CalculateCollisions() const {
+        std::vector<Collision> collisions;
+        const auto activeShapeBBs = GetCollisionBBs();
+        for (const auto &shapeBB: activeShapeBBs) {
+            for (const auto &otherBB: m_outsideBBs) {
+                SDL_FRect intersection{};
+                if (SDL_GetRectIntersectionFloat(&shapeBB, &otherBB, &intersection)) {
+                    collisions.emplace_back(Collision{shapeBB, otherBB, intersection});
+                }
+            }
+        }
+        return collisions;
+    }
+
     std::vector<SDL_FRect> Shape::GetCollisionBBs() const {
         // Calculate BBs for all tiles
         std::vector<SDL_FRect> collisionBBs;
@@ -87,8 +169,10 @@ namespace Tetris {
     }
 
     Shape::Shape(const float x, const float y,
-                 const std::vector<glm::vec2> &tilePositions) : m_position(glm::vec2(x, y)),
-                                                                m_velocity(glm::vec2(0.0f)) {
+                 const std::vector<glm::vec2> &tilePositions,
+                 const std::vector<SDL_FRect> &outsideBBs) : m_position(glm::vec2(x, y)),
+                                                             m_velocity(glm::vec2(0.0f)),
+                                                             m_outsideBBs(outsideBBs) {
         // Initialize tiles
         m_tiles.reserve(tilePositions.size());
         const auto t = GetTransform();

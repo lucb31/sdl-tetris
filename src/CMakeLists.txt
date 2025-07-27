@@ -22,6 +22,7 @@ add_executable(${PROJECT_NAME}
         Shader.h
         FontAsset.cpp
         FontAsset.h
+        Collision.h
 )
 target_sources(${PROJECT_NAME} PRIVATE main.cpp)
 

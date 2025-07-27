@@ -14,7 +14,7 @@ namespace Tetris {
         for (const auto &rowIndex: rowIndices) {
             // Separate list of survivors that will replace the
             // list of tiles after every row iteration
-            std::vector<std::shared_ptr<Tile>> survivors;
+            std::vector<std::shared_ptr<Tile> > survivors;
             survivors.reserve(m_tiles.size() - tileCols);
 
             // Bounds for the current row
@@ -24,14 +24,11 @@ namespace Tetris {
                 if (tile->position.y > rowMaxY) {
                     // If below row -> Survives
                     survivors.push_back(tile);
-                    SDL_Log("Tile below cleared row");
                 } else if (tile->position.y < rowMinY) {
                     // If above row -> Survive & Move
                     tile->position += glm::vec2(0, heightPerTile);
                     survivors.push_back(tile);
-                    // SDL_Log("Tile above cleared row");
                 } else {
-                    // SDL_Log("Tile within cleared row");
                     // Will be removed, by not adding it to the survivors
                 }
             }
@@ -88,80 +85,6 @@ namespace Tetris {
         // Right side
         bbs.emplace_back(boardSizeX, -100.0f, 100.0f, boardSizeY + 200.0f);
         return bbs;
-    }
-
-    void Board::CalculateActiveShapeCollisions(std::vector<Collision> &collisions) const {
-        PROFILE_FUNCTION();
-        collisions.clear();
-        if (m_activeShape == nullptr) {
-            // We're only interested in collisions for the active shape
-            return;
-        }
-        const auto activeShapeBBs = m_activeShape->GetCollisionBBs();
-        for (const auto &bb: activeShapeBBs) {
-            // Check collisions with frozen tiles
-            for (const auto &tile: m_tiles) {
-                SDL_FRect intersection{};
-                const SDL_FRect tileBB = tile->BB();
-                if (SDL_GetRectIntersectionFloat(&bb, &tileBB, &intersection)) {
-                    // Register collision to be handled in next process step
-                    collisions.emplace_back(Collision{bb, tileBB, intersection});
-                }
-            }
-
-            // Check collisions with bounding boxes
-            for (const auto &boardBB: m_boardBBs) {
-                SDL_FRect intersection{};
-                if (SDL_GetRectIntersectionFloat(&bb, &boardBB, &intersection)) {
-                    // Register collision to be handled in next process step
-                    collisions.emplace_back(Collision{bb, boardBB, intersection});
-                }
-            }
-        }
-    }
-
-    void Board::ProcessCollisions() {
-        PROFILE_FUNCTION();
-        for (const auto &collision: m_collisions) {
-            // Check position of intersection relative to position
-            glm::vec2 collisionDirection(0.0f);
-            if (collision.intersection.w >= 2.0f) {
-                // Vertical collision
-                if (collision.a.y >= collision.intersection.y) {
-                    // Collision on the top side of the shape
-                    collisionDirection.y = -1;
-                } else {
-                    // Collision on the bottom side of the shape
-                    collisionDirection.y = 1;
-                }
-            }
-            if (collision.intersection.h >= 2.0f) {
-                // Horizontal collision
-                if (collision.a.x >= collision.intersection.x) {
-                    // Collision on the left side
-                    collisionDirection.x = -1;
-                } else {
-                    // Collision on the right side
-                    collisionDirection.x = 1;
-                }
-            }
-
-            if (collisionDirection.y != 0) {
-                // Vertical collision
-                // Stop movement of active shape
-                m_activeShape->Freeze();
-
-                // Collision on top side of the shape -> Game over
-                if (collisionDirection.y < 0) {
-                    m_gameOver = true;
-                }
-            }
-            if (collisionDirection.x != 0) {
-                // Horizontal collision -> Restrict input movement
-                m_leftJustPressed = m_leftJustPressed && collisionDirection.x > 0;
-                m_rightJustPressed = m_rightJustPressed && collisionDirection.x < 0;
-            }
-        }
     }
 
     Board::Board() {
@@ -244,46 +167,40 @@ namespace Tetris {
     }
 
     void Board::AddRandomShape() {
+        // Check if there's still space available. If any tile collides with the top row -> Game Over
+        constexpr SDL_FRect ceilingBB = SDL_FRect(0.0f, 0.0f, boardSizeX, heightPerTile);
+        for (const auto &tile: m_tiles) {
+            const auto tileBB = tile->BB();
+            SDL_FRect intersection{};
+            if (SDL_GetRectIntersectionFloat(&tileBB, &ceilingBB, &intersection)) {
+                SDL_Log("No more space available in top row");
+                m_gameOver = true;
+                break;
+            }
+        }
+        if (m_gameOver) {
+            SDL_Log("Aborting new shape");
+            return;
+        }
+
         // Pick random shape
         const int shapeIdx = SDL_rand(m_shapeConfigurations.size());
         const auto shape = m_shapeConfigurations[shapeIdx];
 
+        // Need to pass all collision bbs to the shape so it can do collision checking
+        // on its own. Ideally we would have a collision server managing this
+        std::vector<SDL_FRect> bbs;
+        bbs.reserve(m_boardBBs.size());
+        bbs.insert(bbs.end(), m_boardBBs.begin(), m_boardBBs.end());
+        for (const auto &tile: m_tiles) {
+            const SDL_FRect tileBB = tile->BB();
+            bbs.push_back(tileBB);
+        }
+
         // + 0.5 to offset by half width; avoids rounding errors when moving by 1 tile width
-        m_activeShape = std::make_unique<Shape>((tileCols / 2.0f + 0.5f) * widthPerTile, heightPerTile * 2, shape.tilePositions);
-    }
-
-    void Board::AttemptRotation(const float &rotation) const {
-        if (m_activeShape == nullptr) {
-            return;
-        }
-        // (Temporarily) rotate shape
-        m_activeShape->Rotate(rotation);
-        // Update transform via 0s tick
-        m_activeShape->Tick(0.0);
-        // Calculate collisions
-        std::vector<Collision> collisions;
-        CalculateActiveShapeCollisions(collisions);
-
-        // Check for intersecting collisions
-        bool needToRevert = false;
-        if (!collisions.empty()) {
-            for (const Collision &collision : collisions) {
-                const float collisionArea = collision.intersection.h * collision.intersection.w;
-                if (collisionArea > 0.0f) {
-                    needToRevert = true;
-                    break;
-                }
-            }
-        }
-
-        // Revert rotation movement if required
-        if (needToRevert) {
-            // Rotate back if collided
-            SDL_Log("Detected intersecting collision after rotation. Reverting rotation.");
-            m_activeShape->Rotate(-rotation);
-            // Update transform via 0s tick
-            m_activeShape->Tick(0.0);
-        }
+        const float startX = (tileCols / 2.0f + 0.5f) * widthPerTile;
+        const float startY = heightPerTile * 2;
+        m_activeShape = std::make_unique<Shape>(startX, startY, shape.tilePositions, bbs);
     }
 
 
@@ -300,9 +217,13 @@ namespace Tetris {
         } else if (e.key == MoveUp) {
             m_upPressed = true;
         } else if (e.key == RotateLeft) {
-            AttemptRotation(-M_PI / 2);
+            if (m_activeShape != nullptr) {
+                m_activeShape->AttemptRotation(-M_PI / 2);
+            }
         } else if (e.key == RotateRight) {
-            AttemptRotation(M_PI / 2);
+            if (m_activeShape != nullptr) {
+                m_activeShape->AttemptRotation(M_PI / 2);
+            }
         }
     }
 
@@ -368,12 +289,14 @@ namespace Tetris {
 
 
     void Board::Tick(const float dt) {
+        if (m_gameOver) {
+            // Nothing to do
+            return;
+        }
         PROFILE_FUNCTION();
-        CalculateActiveShapeCollisions(m_collisions);
-        ProcessCollisions();
 
         if (m_activeShape != nullptr) {
-            if (m_activeShape->IsGrounded() && !m_gameOver) {
+            if (m_activeShape->IsGrounded()) {
                 // Active shape has hit the ground
                 // Move tiles
                 const auto tiles = m_activeShape->GetTiles();

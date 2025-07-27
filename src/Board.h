@@ -16,12 +16,6 @@
 #include "StringRenderer.h"
 #include "TickTimer.h"
 
-struct Collision {
-    SDL_FRect a;
-    SDL_FRect b;
-    SDL_FRect intersection;
-};
-
 namespace Tetris {
     // Rendering constants
     constexpr float boardMvp[] = {
@@ -45,9 +39,8 @@ namespace Tetris {
         bool m_gameOver{false};
         int m_score{0};
         // Needs to be shared to avoid copies in line clear method
-        std::vector<std::shared_ptr<Tile> > m_tiles;
+        std::vector<std::shared_ptr<Tile>> m_tiles;
         std::unique_ptr<Shape> m_activeShape;
-        std::vector<Collision> m_collisions;
         // Used for timeout between shape spawns
         std::unique_ptr<TickTimer> m_tickTimer;
 
@@ -76,10 +69,6 @@ namespace Tetris {
         void CheckForClearedLines();
 
         static std::vector<SDL_FRect> GetBoardBoundingBoxes();
-
-        void CalculateActiveShapeCollisions(std::vector<Collision> &collisions) const;
-
-        void ProcessCollisions();
 
         void AddRandomShape();
 

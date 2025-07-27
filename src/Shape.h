@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 
+#include "Collision.h"
 #include "GameObject.h"
 #include "Tile.h"
 
@@ -30,10 +31,16 @@ namespace Tetris {
         // Requested velocity by user input
         glm::vec2 m_inputVelocity{0.0f};
 
+        // Bounding boxes the shape could collide with
+        // Will be initialized with shape
+        std::vector<SDL_FRect> m_outsideBBs;
+
         void CalculateVelocity();
 
+        std::vector<Collision> CalculateCollisions() const;
+
     public:
-        Shape(float x, float y, const std::vector<glm::vec2> &tilePositions);
+        Shape(float x, float y, const std::vector<glm::vec2> &tilePositions, const std::vector<SDL_FRect> &outsideBBs);
 
         bool IsGrounded() const { return m_grounded; }
 
@@ -48,6 +55,12 @@ namespace Tetris {
         void Draw() override;
 
         void Tick(float dt) override;
+
+        void AttemptRotation(const float &rotation);
+
+        void UpdateTransform() const;
+
+        void MoveAndSlide(float dt);
 
         std::vector<SDL_FRect> GetCollisionBBs() const;
 
