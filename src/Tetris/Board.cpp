@@ -57,7 +57,8 @@ namespace Tetris {
         std::vector<int> rowsToClear;
         for (int row = 0; row < tileRows; ++row) {
             int hits = 0;
-            const auto scanlineBB = SDL_FRect(m_position.x, m_position.y + row * heightPerTile, boardSizeX, heightPerTile);
+            const auto scanlineBB = SDL_FRect(m_position.x, m_position.y + row * heightPerTile, boardSizeX,
+                                              heightPerTile);
             for (const auto &tileBB: tileBBs) {
                 SDL_FRect intersection{};
                 if (SDL_GetRectIntersectionFloat(&tileBB, &scanlineBB, &intersection)) {
@@ -219,6 +220,10 @@ namespace Tetris {
             if (m_activeShape != nullptr) {
                 m_activeShape->AttemptRotation(M_PI / 2);
             }
+        } else if (e.key == LockShape) {
+            if (m_activeShape != nullptr) {
+                m_activeShape->MarkToLock();
+            }
         }
     }
 
@@ -236,16 +241,15 @@ namespace Tetris {
 
     void Board::Draw() {
         DrawGrid();
-        // Draw game over message
-        if (m_gameOver) {
-            m_gameOverString.Render();
-        }
+        DrawTiles();
         if (m_activeShape != nullptr) {
             m_activeShape->Draw();
         }
-        DrawTiles();
         DrawScore();
         m_queue->Draw();
+        if (m_gameOver) {
+            m_gameOverString.Render();
+        }
     }
 
     void Board::DrawTiles() const {

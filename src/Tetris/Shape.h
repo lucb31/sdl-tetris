@@ -30,8 +30,10 @@ namespace Tetris {
         float m_rotation{0.0f};
         // Current velocity
         glm::vec2 m_velocity{0.0f};
-        // Requested velocity by user input
+
+        // input
         glm::vec2 m_inputVelocity{0.0f};
+        bool m_shouldLock{false};
 
         // Bounding boxes the shape could collide with
         // Will be initialized with shape
@@ -42,6 +44,9 @@ namespace Tetris {
         void CalculateVelocity();
 
         std::vector<Collision> CalculateCollisions() const;
+
+        // Shoot shape to final position (max vertical velocity) in next tick
+        void Lock(const float &dt);
 
     public:
         Shape(float x, float y, const std::vector<glm::vec2> &tilePositions, const std::vector<SDL_FRect> &outsideBBs);
@@ -81,6 +86,8 @@ namespace Tetris {
             m_scale = scale;
             UpdateTransform();
         }
+
+        void MarkToLock();
 
         std::vector<SDL_FRect> GetCollisionBBs() const;
 

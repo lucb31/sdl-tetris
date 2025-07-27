@@ -4,6 +4,7 @@
 
 #include "Shape.h"
 
+#include <optional>
 #include <glm/glm.hpp>
 
 #include "Constants.h"
@@ -41,7 +42,7 @@ namespace Tetris {
         std::vector<SDL_FRect> tiles;
         tiles.reserve(m_tiles.size());
         for (const auto &tile: m_tiles) {
-            const glm::vec3 topLeft = tile->GetGlobalTopLeft();
+            const glm::vec2 topLeft = tile->GetGlobalTopLeft();
             tiles.emplace_back(topLeft.x, topLeft.y, widthPerTile * m_scale.x, heightPerTile * m_scale.y);
         }
         Renderer::DrawSDLRects(tiles.data(), tiles.size(),
@@ -71,6 +72,11 @@ namespace Tetris {
         if (m_grounded) {
             // No need to re-calculate position, velocity, transform ...
             return;
+        }
+        if (m_shouldLock) {
+            Lock(dt);
+        } else {
+            CalculateVelocity();
         }
         MoveAndSlide(dt);
     }
@@ -112,7 +118,6 @@ namespace Tetris {
     }
 
     void Shape::MoveAndSlide(const float dt) {
-        CalculateVelocity();
         const glm::vec<2, float> oldPosition = m_position;
         m_position = m_position + m_velocity * dt;
         UpdateTransform();
@@ -163,6 +168,76 @@ namespace Tetris {
             }
         }
         return collisions;
+    }
+
+
+    // Function to check ray and line segment intersection
+    std::optional<glm::vec2> RayIntersectsSegmentAt(
+        const glm::vec2 &rayOrigin,
+        const glm::vec2 &rayDir,
+        const glm::vec2 &segA,
+        const glm::vec2 &segB,
+        const float epsilon = 1e-6f
+    ) {
+        glm::vec2 u = rayDir; // Direction of the ray
+        glm::vec2 v = segB - segA; // Direction of the segment
+        glm::vec2 w = rayOrigin - segA;
+
+        float a = glm::dot(u, u); // always >= 0
+        float b = glm::dot(u, v);
+        float c = glm::dot(v, v); // always >= 0
+        float d = glm::dot(u, w);
+        float e = glm::dot(v, w);
+        float D = a * c - b * b; // always >= 0
+
+        if (std::abs(D) < epsilon) {
+            // Parallel case
+            return std::nullopt;
+        }
+
+        float sc = (b * e - c * d) / D;
+        float tc = (a * e - b * d) / D;
+
+        // Check if intersection lies on the ray (sc >= 0) and within the segment (tc ∈ [0,1])
+        if (sc < 0.0f || tc < 0.0f || tc > 1.0f) {
+            return std::nullopt;
+        }
+
+        glm::vec2 intersection = rayOrigin + sc * u;
+        return intersection;
+    }
+
+    void Shape::Lock(const float &dt) {
+        // Determine minimum distance to the next bb
+        float minDistanceY = 999999999.0f;
+        constexpr auto lineDir = glm::vec2(0.0f, 1.0f);
+
+        for (const auto &tile: m_tiles) {
+            const auto topLeft = tile->GetGlobalTopLeft();
+            const auto lineOrig = glm::vec2(
+                topLeft.x + widthPerTile / 2.0f,
+                topLeft.y + heightPerTile
+            );
+
+            for (const auto &otherBB: m_outsideBBs) {
+                const auto bbP1 = glm::vec2(otherBB.x, otherBB.y);
+                const auto bbP2 = glm::vec2(otherBB.x + otherBB.w, otherBB.y);
+                const auto p = RayIntersectsSegmentAt(lineOrig, lineDir, bbP1, bbP2);
+                if (p) {
+                    // Ray intersects with current bb, update minimum distance
+                    const auto distance = glm::distance(p.value(), lineOrig);
+                    minDistanceY = std::min(minDistanceY, distance);
+                }
+            }
+        }
+        SDL_Log("Minimum dist %f. Number of bbs, %i", minDistanceY, m_outsideBBs.size());
+        m_position.y = m_position.y + minDistanceY;
+        Freeze();
+        m_shouldLock = false;
+    }
+
+    void Shape::MarkToLock() {
+        m_shouldLock = true;
     }
 
     std::vector<SDL_FRect> Shape::GetCollisionBBs() const {

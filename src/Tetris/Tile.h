@@ -12,7 +12,7 @@ namespace Tetris {
     class Tile : public GameObject {
 
     public:
-        glm::vec3 GetGlobalTopLeft() const;
+        glm::vec2 GetGlobalTopLeft() const;
         // Relative position towards parent
         glm::vec2 position{0.0f};
         glm::mat4 parentTransform{1.0f};

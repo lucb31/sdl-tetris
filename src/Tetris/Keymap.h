@@ -13,6 +13,7 @@ namespace Tetris {
         MoveDown = SDLK_S,
         RotateRight = SDLK_E,
         RotateLeft = SDLK_Q,
+        LockShape = SDLK_SPACE,
     };
 }
 #endif //KEYMAP_H
