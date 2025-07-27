@@ -19,6 +19,10 @@ namespace Tetris {
             // list of tiles after every row iteration
             std::vector<std::shared_ptr<Tile> > survivors;
             survivors.reserve(m_tiles.size() - tileCols);
+            int survive = 0;
+            int moveDown = 0;
+            int remove = 0;
+            const int total = m_tiles.size();
 
             // Bounds for the current row
             const float rowMinY = m_position.y + rowIndex * heightPerTile;
@@ -26,19 +30,24 @@ namespace Tetris {
             for (const auto &tile: m_tiles) {
                 // Use bb here to get GLOBAL position of tile, not local
                 const auto tileBB = tile->BB();
-                if (tileBB.y > rowMaxY) {
+                if (tileBB.y >= rowMaxY) {
                     // If below row -> Survives
                     survivors.push_back(tile);
+                    survive++;
                 } else if (tileBB.y < rowMinY) {
                     // If above row -> Survive & Move down one row
-                    tile->position += glm::vec2(0, heightPerTile);
+                    tile->position += glm::vec2(0.0f, (float) heightPerTile);
                     survivors.push_back(tile);
+                    moveDown++;
                 } else {
+                    remove++;
                     // Will be removed, by not adding it to the survivors
                 }
             }
             // Update tiles with survivor list
             m_tiles = survivors;
+            SDL_Log("From %i total tiles %i will stay in place, %i will move down and %i will be removed", total,
+                    survive, moveDown, remove);
         }
         m_score += rowIndices.size() * tileCols;
         UpdateScore();
@@ -70,7 +79,7 @@ namespace Tetris {
             // Number of collisions with scanline geq to number of tiles per row
             // -> Entire line covered, schedule for deletion
             if (hits >= tileCols) {
-                SDL_Log("Time to clear line %i", row);
+                SDL_Log("Time to clear line %i / %i", row, tileRows);
                 rowsToClear.push_back(row);
             }
         }
