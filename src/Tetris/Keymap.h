@@ -14,6 +14,7 @@ namespace Tetris {
         RotateRight = SDLK_E,
         RotateLeft = SDLK_Q,
         LockShape = SDLK_SPACE,
+        Restart = SDLK_RETURN,
     };
 }
 #endif //KEYMAP_H

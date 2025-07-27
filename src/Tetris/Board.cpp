@@ -41,7 +41,7 @@ namespace Tetris {
             m_tiles = survivors;
         }
         m_score += rowIndices.size() * tileCols;
-        m_scoreString.SetString(std::format("Score: {}", m_score));
+        UpdateScore();
     }
 
     void Board::CheckForClearedLines() {
@@ -114,13 +114,26 @@ namespace Tetris {
         m_gameOverString.SetPosition(glm::vec2(kScreenWidth / 2, kScreenHeight / 2));
         m_gameOverString.SetString("Game Over");
         m_scoreString = StringRenderer();
-        m_scoreString.SetPosition(glm::vec2(boardSizeX + 50, 50));
-        m_scoreString.SetString("Score: 0");
+        m_scoreString.SetPosition(glm::vec2(m_position.x + boardSizeX + 50, m_position.y + 50));
 
         // Initialize Board bounding boxes
         m_boardBBs = GetBoardBoundingBoxes();
+
+        ResetBoard();
+    }
+
+    void Board::ResetBoard() {
+        m_tiles = std::vector<std::shared_ptr<Tile> >();
+        m_queue.reset();
         m_queue = std::make_unique<ShapeQueue>();
+        m_gameOver = false;
+        m_score = 0;
+        UpdateScore();
         AddRandomShape();
+    }
+
+    void Board::UpdateScore() {
+        m_scoreString.SetString(std::format("Score: {}", m_score));
     }
 
     Board::~Board() {
@@ -185,16 +198,15 @@ namespace Tetris {
         bbs.reserve(m_boardBBs.size());
         bbs.insert(bbs.end(), m_boardBBs.begin(), m_boardBBs.end());
         for (const auto &tile: m_tiles) {
-            const SDL_FRect tileBB = tile->BB();
-            bbs.push_back(tileBB);
+            bbs.emplace_back(tile->BB());
         }
 
         // Pop shape from queue and enqueue a new one
         const ShapeConfiguration shape = m_queue->Next();
 
         // + 0.5 to offset by half width; avoids rounding errors when moving by 1 tile width
-        const float offsetX = boardSizeX / 2.0f;
-        const float offsetY = heightPerTile * 2;
+        constexpr float offsetX = boardSizeX / 2.0f;
+        constexpr float offsetY = heightPerTile * 2;
         const auto shapeSpawnPos = m_position + glm::vec2(offsetX, offsetY);
         m_activeShape = std::make_unique<Shape>(shapeSpawnPos, shape, bbs);
     }
@@ -223,6 +235,10 @@ namespace Tetris {
         } else if (e.key == LockShape) {
             if (m_activeShape != nullptr) {
                 m_activeShape->MarkToLock();
+            }
+        } else if (e.key == Restart) {
+            if (m_gameOver) {
+                ResetBoard();
             }
         }
     }
@@ -311,7 +327,7 @@ namespace Tetris {
                 CheckForClearedLines();
 
                 // Set timer to spawn next shape
-                m_tickTimer = std::make_unique<TickTimer>(1.0f, [this](int) {
+                m_tickTimer = std::make_unique<TickTimer>(0.2f, [this](int) {
                     AddRandomShape();
                 });
             } else {

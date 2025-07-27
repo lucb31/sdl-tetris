@@ -71,6 +71,11 @@ namespace Tetris {
 
     public:
         Board();
+
+        void ResetBoard();
+
+        void UpdateScore();
+
         ~Board();
 
         void HandleKeyDown(const SDL_KeyboardEvent &);
