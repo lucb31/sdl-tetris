@@ -258,18 +258,28 @@ namespace Tetris {
         }
         // (Temporarily) rotate shape
         m_activeShape->Rotate(rotation);
-
         // Update transform via 0s tick
         m_activeShape->Tick(0.0);
-
-        // Check collisions
+        // Calculate collisions
         std::vector<Collision> collisions;
         CalculateActiveShapeCollisions(collisions);
 
-        // BUG: Should only rotate back for overlapping collisions, not for 'touching'
+        // Check for intersecting collisions
+        bool needToRevert = false;
         if (!collisions.empty()) {
+            for (const Collision &collision : collisions) {
+                const float collisionArea = collision.intersection.h * collision.intersection.w;
+                if (collisionArea > 0.0f) {
+                    needToRevert = true;
+                    break;
+                }
+            }
+        }
+
+        // Revert rotation movement if required
+        if (needToRevert) {
             // Rotate back if collided
-            SDL_Log("Reverting");
+            SDL_Log("Detected intersecting collision after rotation. Reverting rotation.");
             m_activeShape->Rotate(-rotation);
             // Update transform via 0s tick
             m_activeShape->Tick(0.0);
