@@ -18,16 +18,16 @@ namespace Tetris {
             // Separate list of survivors that will replace the
             // list of tiles after every row iteration
             std::vector<std::shared_ptr<Tile> > survivors;
-            survivors.reserve(m_tiles.size() - tileCols);
+            survivors.reserve(m_staticTiles.size() - tileCols);
             int survive = 0;
             int moveDown = 0;
             int remove = 0;
-            const int total = m_tiles.size();
+            const int total = m_staticTiles.size();
 
             // Bounds for the current row
             const float rowMinY = m_position.y + rowIndex * heightPerTile;
             const float rowMaxY = m_position.y + (rowIndex + 1) * heightPerTile;
-            for (const auto &tile: m_tiles) {
+            for (const auto &tile: m_staticTiles) {
                 // Use bb here to get GLOBAL position of tile, not local
                 const auto tileBB = tile->BB();
                 if (tileBB.y >= rowMaxY) {
@@ -45,7 +45,7 @@ namespace Tetris {
                 }
             }
             // Update tiles with survivor list
-            m_tiles = survivors;
+            m_staticTiles = survivors;
             SDL_Log("From %i total tiles %i will stay in place, %i will move down and %i will be removed", total,
                     survive, moveDown, remove);
         }
@@ -57,8 +57,8 @@ namespace Tetris {
         PROFILE_FUNCTION();
         // Retrieve list of all frozen tile bounding boxes
         std::vector<SDL_FRect> tileBBs;
-        tileBBs.reserve(m_tiles.size());
-        for (const auto &tile: m_tiles) {
+        tileBBs.reserve(m_staticTiles.size());
+        for (const auto &tile: m_staticTiles) {
             tileBBs.push_back(tile->BB());
         }
 
@@ -134,7 +134,7 @@ namespace Tetris {
     }
 
     void Board::ResetBoard() {
-        m_tiles = std::vector<std::shared_ptr<Tile> >();
+        m_staticTiles = std::vector<std::shared_ptr<Tile> >();
         m_queue.reset();
         m_queue = std::make_unique<ShapeQueue>();
         m_gameOver = false;
@@ -191,7 +191,7 @@ namespace Tetris {
     void Board::AddRandomShape() {
         // Check if there's still space available. If any tile collides with the top row -> Game Over
         const SDL_FRect ceilingBB = SDL_FRect(m_position.x, m_position.y, boardSizeX, heightPerTile);
-        for (const auto &tile: m_tiles) {
+        for (const auto &tile: m_staticTiles) {
             const auto tileBB = tile->BB();
             SDL_FRect intersection{};
             if (SDL_GetRectIntersectionFloat(&tileBB, &ceilingBB, &intersection)) {
@@ -210,7 +210,7 @@ namespace Tetris {
         std::vector<SDL_FRect> bbs;
         bbs.reserve(m_boardBBs.size());
         bbs.insert(bbs.end(), m_boardBBs.begin(), m_boardBBs.end());
-        for (const auto &tile: m_tiles) {
+        for (const auto &tile: m_staticTiles) {
             bbs.emplace_back(tile->BB());
         }
 
@@ -270,7 +270,7 @@ namespace Tetris {
 
     void Board::Draw() {
         DrawGrid();
-        DrawTiles();
+        DrawStaticTiles();
         if (m_activeShape != nullptr) {
             m_activeShape->Draw();
         }
@@ -281,10 +281,10 @@ namespace Tetris {
         }
     }
 
-    void Board::DrawTiles() const {
+    void Board::DrawStaticTiles() const {
         std::vector<SDL_FRect> tiles;
-        tiles.reserve(m_tiles.size());
-        for (const auto &tile: m_tiles) {
+        tiles.reserve(m_staticTiles.size());
+        for (const auto &tile: m_staticTiles) {
             tiles.emplace_back(tile->BB());
         }
         Renderer::DrawSDLRects(tiles.data(), tiles.size());
@@ -327,21 +327,21 @@ namespace Tetris {
         if (m_activeShape != nullptr) {
             if (m_activeShape->IsGrounded()) {
                 // Active shape has hit the ground
-                // Move tiles
+                // Move shape tiles to static board tiles
                 const auto tiles = m_activeShape->GetTiles();
                 const glm::mat4 shapeTransform = m_activeShape->GetTransform();
-                m_tiles.reserve(m_tiles.size() + 4);
+                m_staticTiles.reserve(m_staticTiles.size() + 4);
                 for (const auto &tile: tiles) {
                     // Transform tile position to global pos
-                    const glm::vec4 globalPos = shapeTransform * glm::vec4(tile->position.x, tile->position.y, 1, 1);
-                    m_tiles.emplace_back(std::make_shared<Tile>(globalPos.x, globalPos.y));
+                    const glm::vec4 globalPos = shapeTransform * glm::vec4(tile->position, 1.0f, 1.0f);
+                    m_staticTiles.emplace_back(std::make_shared<Tile>(globalPos));
                 }
                 m_activeShape.reset();
 
                 CheckForClearedLines();
 
                 // Set timer to spawn next shape
-                m_tickTimer = std::make_unique<TickTimer>(0.2f, [this](int) {
+                m_shapeSpawnTimer = std::make_unique<TickTimer>(0.2f, [this](int) {
                     AddRandomShape();
                 });
             } else {
@@ -361,8 +361,8 @@ namespace Tetris {
         }
 
         // Calculate frame for all subobjects
-        if (m_tickTimer != nullptr) {
-            m_tickTimer->Tick(dt);
+        if (m_shapeSpawnTimer != nullptr) {
+            m_shapeSpawnTimer->Tick(dt);
         }
         if (m_activeShape != nullptr) {
             m_activeShape->Tick(dt);

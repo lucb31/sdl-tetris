@@ -24,11 +24,11 @@ namespace Tetris {
         bool m_gameOver{false};
         int m_score{0};
         int m_highScore{0};
+        // Static tiles (no longer part of a shape, fixed on the board)
         // Needs to be shared to avoid copies in line clear method
-        std::vector<std::shared_ptr<Tile>> m_tiles;
+        std::vector<std::shared_ptr<Tile>> m_staticTiles;
         std::unique_ptr<Shape> m_activeShape;
-        // Used for timeout between shape spawns
-        std::unique_ptr<TickTimer> m_tickTimer;
+        std::unique_ptr<TickTimer> m_shapeSpawnTimer;
         std::unique_ptr<ShapeQueue> m_queue;
 
         std::vector<SDL_FRect> m_boardBBs;
@@ -65,7 +65,7 @@ namespace Tetris {
 
         void DrawGrid() const;
 
-        void DrawTiles() const;
+        void DrawStaticTiles() const;
 
         void DrawScore();
 
