@@ -245,6 +245,7 @@ namespace Tetris {
         }
         DrawTiles();
         DrawScore();
+        m_queue->Draw();
     }
 
     void Board::DrawTiles() const {

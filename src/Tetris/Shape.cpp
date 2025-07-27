@@ -36,6 +36,18 @@ namespace Tetris {
         m_rotation += radians;
     }
 
+    // Interims solution to draw a preview of the shape with scale
+    void Shape::DrawPreview() const {
+        std::vector<SDL_FRect> tiles;
+        tiles.reserve(m_tiles.size());
+        for (const auto &tile: m_tiles) {
+            const glm::vec3 topLeft = tile->GetGlobalTopLeft();
+            tiles.emplace_back(topLeft.x, topLeft.y, widthPerTile * m_scale.x, heightPerTile * m_scale.y);
+        }
+        Renderer::DrawSDLRects(tiles.data(), tiles.size(),
+                               std::array{m_color.x, m_color.y, m_color.z, m_color.w});
+    }
+
     void Shape::Draw() {
         // Draw tiles
         std::vector<SDL_FRect> tiles;
@@ -165,8 +177,9 @@ namespace Tetris {
 
     glm::mat4 Shape::GetTransform() const {
         const glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(m_position.x, m_position.y, 0.0f));
-        const glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), m_rotation, glm::vec3(0.0f, 0.0f, 1.0f));
-        return translate * rotate;
+        const glm::mat4 rotate = glm::rotate(translate, m_rotation, glm::vec3(0.0f, 0.0f, 1.0f));
+        const glm::mat4 scale = glm::scale(rotate, glm::vec3(m_scale, 1.0f));
+        return scale;
     }
 
     Shape::Shape(const float x, const float y,

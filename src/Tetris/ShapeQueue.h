@@ -11,18 +11,14 @@
 
 namespace Tetris {
     class ShapeQueue {
-        std::queue<ShapeConfiguration> m_queue;
+        std::deque<ShapeConfiguration> m_queue;
         std::vector<ShapeConfiguration> m_shapePool;
 
     public:
-        void Draw();
+        void Draw() const;
         void EnqueueRandom();
 
         ShapeConfiguration Next();
-
-        bool IsEmpty() const;
-
-        size_t GetSize() const;
 
         ShapeQueue();
     };

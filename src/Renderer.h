@@ -28,6 +28,7 @@ public:
 
     static std::array<float, 8> RectToVec2(const SDL_FRect &rect);
 
+    static void DrawSDLFRectsOutline(const SDL_FRect *rects, int count);
     static void DrawSDLRects(const SDL_FRect *rects, int count);
     static void DrawSDLRects(const SDL_FRect *rects, int count, std::array<float, 4> color);
 

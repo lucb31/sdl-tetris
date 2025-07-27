@@ -25,6 +25,7 @@ namespace Tetris {
         std::vector<std::shared_ptr<Tile> > m_tiles;
         // Current position
         glm::vec2 m_position{0.0f};
+        glm::vec2 m_scale{1.0f};
         // Current rotation in RAD
         float m_rotation{0.0f};
         // Current velocity
@@ -64,6 +65,8 @@ namespace Tetris {
 
         void Rotate(float radians);
 
+        void DrawPreview() const;
+
         void Draw() override;
 
         void Tick(float dt) override;
@@ -73,6 +76,11 @@ namespace Tetris {
         void UpdateTransform() const;
 
         void MoveAndSlide(float dt);
+
+        void SetScale(const glm::vec2 &scale) {
+            m_scale = scale;
+            UpdateTransform();
+        }
 
         std::vector<SDL_FRect> GetCollisionBBs() const;
 

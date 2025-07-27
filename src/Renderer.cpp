@@ -145,6 +145,66 @@ std::array<float, 8> Renderer::RectToVec2(const SDL_FRect &rect) {
     };
 }
 
+void Renderer::DrawSDLFRectsOutline(const SDL_FRect *rects, int count) {
+    // TODO: PARAMETER
+    constexpr std::array<float, 4> color = {1, 0, 1, 1};
+    // Calc positions & indices
+    std::vector<float> positions;
+    // 4 vertices with 2 dimensions
+    positions.reserve(count * 4 * 2);
+    for (int i = 0; i < count; i++) {
+        const auto arrayPositions = RectToVec2(rects[i]);
+        for (const float &pos: arrayPositions) {
+            positions.push_back(pos);
+        }
+    }
+    const float mvp[] = {
+        2.0f / kScreenWidth, 0, 0, 0,
+        0, -2.0f / kScreenHeight, 0, 0,
+        0, 0, 1, 0,
+        -1, 1, 0, 1,
+    };
+
+    // Setup buffers
+    GLuint VAO;
+    glGenVertexArrays(1, &VAO);
+    GLuint VBO, EBO;
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+
+    // Load shaders
+    GLuint shaderProgram = LoadShader("src/Shaders/rect.vert", "src/Shaders/rect.frag");
+    // Bind vertex data
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * positions.size(), positions.data(), GL_DYNAMIC_DRAW);
+
+    // Bind position attribute
+    const auto posLocation = glGetAttribLocation(shaderProgram, "pos");
+    // Size 2 -> 2 vector dimensions
+    glVertexAttribPointer(posLocation, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(posLocation);
+
+    // Render
+    glUseProgram(shaderProgram);
+    CheckGLError("glUseProgram");
+    // Bind mvp
+    const auto mvpLocation = glGetUniformLocation(shaderProgram, "mvp");
+    glUniformMatrix4fv(mvpLocation, 1, false, mvp);
+    CheckGLError("glUniformMatrix4fv");
+    // Bind color
+    const auto colorLocation = glGetUniformLocation(shaderProgram, "color");
+    glUniform4fv(colorLocation, 1, color.data());
+    CheckGLError("glUniform4fv");
+    // Bind vertex attributes & draw
+    glBindVertexArray(VAO);
+    CheckGLError("glBindVertexArray");
+    for (int i = 0; i < count; i++) {
+        glDrawArrays(GL_LINE_LOOP, i*4, 4);
+    }
+    CheckGLError("glDrawElements");
+    glBindVertexArray(0);
+}
+
 void Renderer::DrawSDLRects(const SDL_FRect *rects, const int count, const std::array<float, 4> color) {
     // Calc positions & indices
     std::vector<float> positions;
@@ -153,14 +213,14 @@ void Renderer::DrawSDLRects(const SDL_FRect *rects, const int count, const std::
     // 2 triangles each connecting 3 vertices
     const unsigned int templateIndices[] = {0, 1, 2, 0, 2, 3};
     std::vector<unsigned int> indices;
-    indices.reserve(count*6);
+    indices.reserve(count * 6);
     for (int i = 0; i < count; i++) {
         const auto arrayPositions = RectToVec2(rects[i]);
-        for (const float &pos : arrayPositions) {
+        for (const float &pos: arrayPositions) {
             positions.push_back(pos);
         }
-        for (const unsigned int templateIndice : templateIndices) {
-            indices.push_back(i*4 + templateIndice);
+        for (const unsigned int templateIndice: templateIndices) {
+            indices.push_back(i * 4 + templateIndice);
         }
     }
     const float mvp[] = {
@@ -182,10 +242,10 @@ void Renderer::DrawSDLRects(const SDL_FRect *rects, const int count, const std::
     GLuint shaderProgram = LoadShader("src/Shaders/rect.vert", "src/Shaders/rect.frag");
     // Bind vertex data
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*positions.size(), positions.data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * positions.size(), positions.data(), GL_DYNAMIC_DRAW);
     // Bind index data
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indices.size(), indices.data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), indices.data(), GL_DYNAMIC_DRAW);
 
     // Bind position attribute
     const auto posLocation = glGetAttribLocation(shaderProgram, "pos");

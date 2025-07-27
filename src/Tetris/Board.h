@@ -13,7 +13,6 @@
 #include "../GameObject.h"
 #include "../Renderer.h"
 #include "Shape.h"
-#include "ShapeConfiguration.h"
 #include "ShapeQueue.h"
 #include "../StringRenderer.h"
 #include "../TickTimer.h"

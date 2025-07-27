@@ -4,6 +4,10 @@
 
 #include "ShapeQueue.h"
 
+#include "Constants.h"
+#include "Shape.h"
+#include "../Renderer.h"
+
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
 
@@ -45,10 +49,38 @@ namespace Tetris {
         }
     }
 
+    // Dirty solution just to get something displayed.
+    // Problem: Tile / shape rendering does not support scaling well
+    // Solution: Probably best to have a simple 'ShapePreview' class
+    void ShapeQueue::Draw() const {
+        // Draw containers
+        std::vector<SDL_FRect> rects;
+        rects.reserve(m_queue.size());
+        rects.emplace_back(200, 100, 100, 100);
+        rects.emplace_back(212.5, 225, 75, 75);
+        rects.emplace_back(212.5, 325, 75, 75);
+        Renderer::DrawSDLFRectsOutline(rects.data(), rects.size());
+
+        // Draw previews
+        std::vector<SDL_FRect> outsideBBs;
+        int i = 0;
+        for (const auto config: m_queue) {
+            float scale = 0.5f;
+            if (i == 0) scale = 0.75f;
+            auto shape = Shape(
+                rects.at(i).x + widthPerTile * 2 * scale,
+                rects.at(i).y + heightPerTile * 2 * scale,
+                config, outsideBBs
+            );
+            shape.SetScale(glm::vec2(scale));
+            shape.DrawPreview();
+            i++;
+        }
+    }
+
     void ShapeQueue::EnqueueRandom() {
         const int shapeIdx = SDL_rand(m_shapePool.size());
-        m_queue.push(m_shapePool[shapeIdx]);
-        SDL_Log("Pushed %s", m_shapePool[shapeIdx].name.c_str());
+        m_queue.push_back(m_shapePool[shapeIdx]);
     }
 
     ShapeConfiguration ShapeQueue::Next() {
@@ -57,8 +89,7 @@ namespace Tetris {
             return ShapeConfiguration{};
         }
         const auto config = m_queue.front();
-        SDL_Log("Popped %s", config.name.c_str());
-        m_queue.pop();
+        m_queue.pop_front();
         // Enqueue a new random shape to ensure there's always 3 shapes
         EnqueueRandom();
         return config;
