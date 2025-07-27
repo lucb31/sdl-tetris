@@ -29,9 +29,9 @@ namespace Tetris {
                     // If above row -> Survive & Move
                     tile->position += glm::vec2(0, heightPerTile);
                     survivors.push_back(tile);
-                    SDL_Log("Tile above cleared row");
+                    // SDL_Log("Tile above cleared row");
                 } else {
-                    SDL_Log("Tile within cleared row");
+                    // SDL_Log("Tile within cleared row");
                     // Will be removed, by not adding it to the survivors
                 }
             }
@@ -90,7 +90,7 @@ namespace Tetris {
         return bbs;
     }
 
-    void Board::CalculateCollisions(std::vector<Collision> &collisions) const {
+    void Board::CalculateActiveShapeCollisions(std::vector<Collision> &collisions) const {
         PROFILE_FUNCTION();
         collisions.clear();
         if (m_activeShape == nullptr) {
@@ -158,8 +158,8 @@ namespace Tetris {
             }
             if (collisionDirection.x != 0) {
                 // Horizontal collision -> Restrict input movement
-                m_leftPressed = m_leftPressed && collisionDirection.x > 0;
-                m_rightPressed = m_rightPressed && collisionDirection.x < 0;
+                m_leftJustPressed = m_leftJustPressed && collisionDirection.x > 0;
+                m_rightJustPressed = m_rightJustPressed && collisionDirection.x < 0;
             }
         }
     }
@@ -248,10 +248,14 @@ namespace Tetris {
         const int shapeIdx = SDL_rand(m_shapeConfigurations.size());
         const auto shape = m_shapeConfigurations[shapeIdx];
 
-        m_activeShape = std::make_unique<Shape>(tileCols / 2 * widthPerTile, heightPerTile * 2, shape.tilePositions);
+        // + 0.5 to offset by half width; avoids rounding errors when moving by 1 tile width
+        m_activeShape = std::make_unique<Shape>((tileCols / 2.0f + 0.5f) * widthPerTile, heightPerTile * 2, shape.tilePositions);
     }
 
     void Board::AttemptRotation(const float &rotation) const {
+        if (m_activeShape == nullptr) {
+            return;
+        }
         // (Temporarily) rotate shape
         m_activeShape->Rotate(rotation);
 
@@ -260,8 +264,9 @@ namespace Tetris {
 
         // Check collisions
         std::vector<Collision> collisions;
-        CalculateCollisions(collisions);
+        CalculateActiveShapeCollisions(collisions);
 
+        // BUG: Should only rotate back for overlapping collisions, not for 'touching'
         if (!collisions.empty()) {
             // Rotate back if collided
             SDL_Log("Reverting");
@@ -274,21 +279,20 @@ namespace Tetris {
 
     void Board::HandleKeyDown(const SDL_KeyboardEvent &e) {
         if (e.key == MoveLeft) {
+            if (!m_leftPressed) m_leftJustPressed = true;
             m_leftPressed = true;
         } else if (e.key == MoveRight) {
+            if (!m_rightPressed) m_rightJustPressed = true;
             m_rightPressed = true;
         } else if (e.key == MoveDown) {
+            if (!m_downPressed) m_downJustPressed = true;
             m_downPressed = true;
         } else if (e.key == MoveUp) {
             m_upPressed = true;
         } else if (e.key == RotateLeft) {
-            if (m_activeShape != nullptr) {
-                AttemptRotation(-M_PI / 2);
-            }
+            AttemptRotation(-M_PI / 2);
         } else if (e.key == RotateRight) {
-            if (m_activeShape != nullptr) {
-                AttemptRotation(M_PI / 2);
-            }
+            AttemptRotation(M_PI / 2);
         }
     }
 
@@ -355,7 +359,7 @@ namespace Tetris {
 
     void Board::Tick(const float dt) {
         PROFILE_FUNCTION();
-        CalculateCollisions(m_collisions);
+        CalculateActiveShapeCollisions(m_collisions);
         ProcessCollisions();
 
         if (m_activeShape != nullptr) {
@@ -381,15 +385,15 @@ namespace Tetris {
             } else {
                 // Apply active shape movement inputs
                 auto inputVelocity = glm::vec2(0.0f);
-                if (m_leftPressed)
+                if (m_leftJustPressed)
                     inputVelocity += glm::vec2(-1, 0);
-                if (m_rightPressed)
+                if (m_rightJustPressed)
                     inputVelocity += glm::vec2(1, 0);
-                if (m_downPressed)
+                if (m_downJustPressed)
                     inputVelocity += glm::vec2(0, 1);
                 // Up just for debugging purposes
-                //if (m_upPressed)
-                //    inputVelocity += glm::vec2(0, -1);
+                if (m_upPressed)
+                    inputVelocity += glm::vec2(0, -1);
                 m_activeShape->AddInputVelocity(inputVelocity);
             }
         }
@@ -401,5 +405,8 @@ namespace Tetris {
         if (m_activeShape != nullptr) {
             m_activeShape->Tick(dt);
         }
+        m_rightJustPressed = false;
+        m_leftJustPressed = false;
+        m_downJustPressed = false;
     }
 } // Tetris

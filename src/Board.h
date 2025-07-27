@@ -64,8 +64,11 @@ namespace Tetris {
 
         // Keyboard control
         bool m_leftPressed{false};
+        bool m_leftJustPressed{false};
         bool m_rightPressed{false};
+        bool m_rightJustPressed{false};
         bool m_downPressed{false};
+        bool m_downJustPressed{false};
         bool m_upPressed{false};
 
         void ClearLines(const std::vector<int> &rowIndices);
@@ -74,7 +77,7 @@ namespace Tetris {
 
         static std::vector<SDL_FRect> GetBoardBoundingBoxes();
 
-        void CalculateCollisions(std::vector<Collision> &collisions) const;
+        void CalculateActiveShapeCollisions(std::vector<Collision> &collisions) const;
 
         void ProcessCollisions();
 

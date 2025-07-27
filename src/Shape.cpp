@@ -6,6 +6,7 @@
 
 #include <glm/glm.hpp>
 
+#include "Constants.h"
 #include "Renderer.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -25,7 +26,7 @@ namespace Tetris {
             return;
         }
         if (glm::length(direction) > 0.005f) {
-            m_inputVelocity = glm::normalize(direction) * m_speed;
+            m_inputVelocity = glm::normalize(direction) * (float)widthPerTile / 0.016f;
         } else {
             m_inputVelocity = glm::vec2(0.0f);
         }
