@@ -37,5 +37,6 @@ jobs:
         with:
           name: built-binaries
           path: |
-            build/src/sdl_tetris
+            build/sdl_tetris
+            build/assets/
           if-no-files-found: error
