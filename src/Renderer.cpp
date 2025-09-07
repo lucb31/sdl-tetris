@@ -3,6 +3,8 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <string>
+#include <format>
 
 bool Renderer::init() {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -67,22 +69,28 @@ void Renderer::CheckShaderLinking(GLuint program) {
     }
 }
 
+static std::string GetShaderPath(const std::string& path) {
+    return std::format("{}/{}", SHADERS_DIR, path);
+}
+
 /**
  *
- * @param vertexPath
- * @param fragmentPath
+ * @param vertexInputPath
+ * @param fragmentInputPath
  * @return Shader program
  */
-GLuint Renderer::LoadShader(const char *vertexPath, const char *fragmentPath) {
+GLuint Renderer::LoadShader(const char *vertexInputPath, const char *fragmentInputPath) {
     // Open file streams for vertex & frag shader
-    std::ifstream vShaderFile(vertexPath);
+    std::string vertexPath = GetShaderPath(vertexInputPath);
+    std::string fragmentPath = GetShaderPath(fragmentInputPath);
+    std::ifstream vShaderFile(vertexPath.c_str());
     if (!vShaderFile.is_open()) {
-        SDL_LogError(0, "Could not open vertex shader at '%s'", vertexPath);
+        SDL_LogError(0, "Could not open vertex shader at '%s'", vertexPath.c_str());
         return 0;
     }
-    std::ifstream fShaderFile(fragmentPath);
+    std::ifstream fShaderFile(fragmentPath.c_str());
     if (!fShaderFile.is_open()) {
-        SDL_LogError(0, "Could not open fragment shader at '%s/%s'", fragmentPath);
+        SDL_LogError(0, "Could not open fragment shader at '%s'", fragmentPath.c_str());
         return 0;
     }
     std::stringstream vShaderStream, fShaderStream;
@@ -173,7 +181,7 @@ void Renderer::DrawSDLFRectsOutline(const SDL_FRect *rects, int count) {
     glBindVertexArray(VAO);
 
     // Load shaders
-    GLuint shaderProgram = LoadShader("src/Shaders/rect.vert", "src/Shaders/rect.frag");
+    GLuint shaderProgram = LoadShader("rect.vert", "rect.frag");
     // Bind vertex data
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * positions.size(), positions.data(), GL_DYNAMIC_DRAW);
@@ -239,7 +247,7 @@ void Renderer::DrawSDLRects(const SDL_FRect *rects, const int count, const std::
     glBindVertexArray(VAO);
 
     // Load shaders
-    GLuint shaderProgram = LoadShader("src/Shaders/rect.vert", "src/Shaders/rect.frag");
+    GLuint shaderProgram = LoadShader("rect.vert", "rect.frag");
     // Bind vertex data
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * positions.size(), positions.data(), GL_DYNAMIC_DRAW);

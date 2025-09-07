@@ -15,16 +15,17 @@ void Shader::Use() const {
     Renderer::CheckGLError("glUseProgram");
 }
 
+// TODO: Remove duplicate implementation between Renderer and Shader class
 int Shader::LoadShader(const std::string &vertexPath, const std::string &fragmentPath) {
     // Open file streams for vertex & frag shader
-    std::ifstream vShaderFile(vertexPath);
+    std::ifstream vShaderFile(vertexPath.c_str());
     if (!vShaderFile.is_open()) {
-        SDL_LogError(0, "Could not open vertex shader at '%s'", vertexPath);
+        SDL_LogError(0, "Could not open vertex shader at '%s'", vertexPath.c_str());
         return 0;
     }
     std::ifstream fShaderFile(fragmentPath);
     if (!fShaderFile.is_open()) {
-        SDL_LogError(0, "Could not open fragment shader at '%s/%s'", fragmentPath);
+        SDL_LogError(0, "Could not open fragment shader at '%s/%s'", fragmentPath.c_str());
         return 0;
     }
     std::stringstream vShaderStream, fShaderStream;

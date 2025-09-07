@@ -165,7 +165,7 @@ namespace Tetris {
         glBindVertexArray(m_vao);
 
         // Load shaders
-        m_shader = Renderer::LoadShader("src/Shaders/rect.vert", "src/Shaders/gridv2.frag");
+        m_shader = Renderer::LoadShader("rect.vert", "gridv2.frag");
         // Bind vertex data
         constexpr float boardWidth = widthPerTile * tileCols;
         constexpr float boardHeight = heightPerTile * tileRows;

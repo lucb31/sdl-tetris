@@ -10,15 +10,30 @@
 #include "glm/ext/matrix_transform.hpp"
 #include <glm/gtc/type_ptr.hpp>
 
+#include <string>
+#include <format>
+
+static std::string GetAssetPath(const std::string& path) {
+    return std::format("{}/{}", ASSETS_DIR, path);
+}
+
+static std::string GetShaderPath(const std::string& path) {
+    return std::format("{}/{}", SHADERS_DIR, path);
+}
+
 StringRenderer::StringRenderer(const int capacity) {
     m_stringBufferCapacity = capacity;
 
     // Load font
     m_font = FontAsset();
-    m_font.Load("assets/256-font.jpg", "assets/256-font.xml");
+    std::string texturePath = GetAssetPath("256-font.jpg");
+    std::string xmlPath = GetAssetPath("256-font.xml");
+    m_font.Load(texturePath, xmlPath);
 
     // Load shader
-    m_shader.Load("src/Shaders/font.vert", "src/Shaders/font.frag");
+    std::string vertPath = GetShaderPath("font.vert");
+    std::string fragPath = GetShaderPath("font.frag");
+    m_shader.Load(vertPath, fragPath);
 
     // Generate buffers
     glGenVertexArrays(1, &m_vao);
