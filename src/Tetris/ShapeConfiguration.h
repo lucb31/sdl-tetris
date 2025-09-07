@@ -5,6 +5,7 @@
 #ifndef SHAPECONFIGURATION_H
 #define SHAPECONFIGURATION_H
 #include <vector>
+#include <string>
 
 #include "glm/vec2.hpp"
 #include "glm/vec4.hpp"
