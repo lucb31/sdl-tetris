@@ -70,7 +70,7 @@ void Renderer::CheckShaderLinking(GLuint program) {
 }
 
 static std::string GetShaderPath(const std::string& path) {
-    return std::format("{}/{}", SHADERS_DIR, path);
+    return std::format("{}{}", SHADERS_DIR, path);
 }
 
 /**

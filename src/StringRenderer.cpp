@@ -13,12 +13,12 @@
 #include <string>
 #include <format>
 
-static std::string GetAssetPath(const std::string& path) {
-    return std::format("{}/{}", ASSETS_DIR, path);
+static std::string GetFontPath(const std::string& path) {
+    return std::format("{}{}", FONTS_DIR, path);
 }
 
 static std::string GetShaderPath(const std::string& path) {
-    return std::format("{}/{}", SHADERS_DIR, path);
+    return std::format("{}{}", SHADERS_DIR, path);
 }
 
 StringRenderer::StringRenderer(const int capacity) {
@@ -26,8 +26,8 @@ StringRenderer::StringRenderer(const int capacity) {
 
     // Load font
     m_font = FontAsset();
-    std::string texturePath = GetAssetPath("256-font.jpg");
-    std::string xmlPath = GetAssetPath("256-font.xml");
+    std::string texturePath = GetFontPath("256-font.jpg");
+    std::string xmlPath = GetFontPath("256-font.xml");
     m_font.Load(texturePath, xmlPath);
 
     // Load shader

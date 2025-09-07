@@ -1,4 +1,3 @@
-#include <oneapi/tbb/profiling.h>
 #include <SDL3/SDL.h>
 
 #include "Tetris/Board.h"
